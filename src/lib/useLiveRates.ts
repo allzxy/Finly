@@ -33,7 +33,8 @@ export function useLiveRates(): LiveRatesState {
   useEffect(() => {
     const cached = getInitialRates();
     if (!isCacheFresh(cached)) {
-      refresh();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void refresh();
     } else {
       setSnapshot(cached);
       setStatus('success');

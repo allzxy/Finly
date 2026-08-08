@@ -29,6 +29,7 @@ export default function WalletFundModal({ open, onClose, wallet }: Props) {
 
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAmount('');
     setNote('');
     setDate(new Date().toISOString().slice(0, 10));
@@ -61,7 +62,7 @@ export default function WalletFundModal({ open, onClose, wallet }: Props) {
 
   // FUNGSI PEMBERSIH INPUT (Ubah koma jadi titik, hapus huruf/minus)
   const handleAmountChange = (val: string) => {
-    let s = val.replace(/,/g, '.').replace(/[^\d.]/g, '');
+    const s = val.replace(/,/g, '.').replace(/[^\d.]/g, '');
     const p = s.split('.');
     setAmount(p.length > 2 ? p[0] + '.' + p.slice(1).join('') : s);
   };

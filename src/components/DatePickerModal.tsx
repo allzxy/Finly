@@ -36,6 +36,7 @@ export default function DatePickerModal({ open, onClose, value, onChange, nested
   useEffect(() => {
     if (open) {
       const d = parseValue(value);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setViewYear(d.getFullYear());
       setViewMonth(d.getMonth());
     }

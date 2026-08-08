@@ -32,6 +32,7 @@ export default function MonthCalendarModal({ open, onClose, value, onChange, sel
   useEffect(() => {
     if (open) {
       const v = parseValue(value);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setViewYear(v.year);
       setViewMonth(v.month);
     }

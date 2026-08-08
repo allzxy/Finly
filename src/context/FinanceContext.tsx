@@ -72,7 +72,9 @@ function loadInitial(): FinanceState {
           selectedMonth: currentMonthKey(),
         };
       }
-    } catch {}
+    } catch {
+      /* ignore storage read error */
+    }
   }
   return {
     wallets: [],
@@ -110,7 +112,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           selectedMonth: state.selectedMonth,
         })
       );
-    } catch {}
+    } catch {
+      /* ignore quota errors */
+    }
   }, [state.wallets, state.categories, state.transactions, state.currencyCode, state.selectedMonth]);
 
   const liveRates = useLiveRates();
@@ -153,7 +157,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       const old = s.transactions.find((tr) => tr.id === id);
       if (!old) return s;
 
-      let wallets = s.wallets.map((w) => {
+      const wallets = s.wallets.map((w) => {
         let bal = w.balance;
         
         // 1. Kembalikan efek transaksi lama HANYA pada dompet utama
@@ -381,6 +385,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useFinance() {
   const ctx = useContext(FinanceContext);
   if (!ctx) throw new Error('useFinance must be used within FinanceProvider');

@@ -3,7 +3,6 @@ import Modal from './Modal';
 import SelectField from './SelectField';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
-import { WALLET_ICONS } from '../lib/icons';
 import type { Wallet, WalletType } from '../lib/types';
 import { Wallet as WalletIcon, CreditCard, PiggyBank, Smartphone } from 'lucide-react';
 
@@ -43,6 +42,7 @@ export default function WalletFormModal({ open, onClose, editing, mode = 'all' }
   useEffect(() => {
     if (!open) return;
     if (editing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(editing.name);
       setType(editing.type);
       setBalance(String(Number(toDisplay(editing.balance).toFixed(2))));
@@ -82,7 +82,7 @@ export default function WalletFormModal({ open, onClose, editing, mode = 'all' }
   };
 
   const handleNumberChange = (val: string, setter: (v: string) => void) => {
-    let s = val.replace(/,/g, '.').replace(/[^\d.]/g, '');
+    const s = val.replace(/,/g, '.').replace(/[^\d.]/g, '');
     const p = s.split('.');
     setter(p.length > 2 ? p[0] + '.' + p.slice(1).join('') : s);
   };

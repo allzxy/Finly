@@ -112,6 +112,7 @@ export default function TransactionFilterModal({ open, onClose, filters, onChang
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function categoryIconFor(icon?: string) {
   return icon ? CATEGORY_ICONS[icon] : undefined;
 }

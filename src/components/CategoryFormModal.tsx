@@ -30,6 +30,7 @@ export default function CategoryFormModal({ open, onClose, editing, defaultType 
   useEffect(() => {
     if (!open) return;
     if (editing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(editing.name);
       setType(editing.type);
       setIcon(editing.icon);

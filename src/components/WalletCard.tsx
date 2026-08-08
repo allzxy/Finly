@@ -35,7 +35,7 @@ export default function WalletCard({ wallet, wallets, onDelete, onEdit, onFund }
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[var(--color-ink)]">{wallet.name}</p>
             <p className="truncate text-xs text-[var(--color-muted)]">
-              {t(`wallets.type.${wallet.type}` as any)}{wallet.institution ? ` · ${wallet.institution}` : ''}
+              {t(`wallets.type.${wallet.type}` as Parameters<typeof t>[0])}{wallet.institution ? ` · ${wallet.institution}` : ''}
             </p>
           </div>
         </div>

@@ -80,8 +80,7 @@ export async function fetchLiveRates(): Promise<RatesSnapshot> {
     saveCache(snapshot);
     return snapshot;
 
-  } catch (errPrimary) {
-    
+  } catch {
     // API CADANGAN: Fawaz Ahmed Currency API (Update stabil via jsDelivr CDN)
     try {
       const fallbackRes = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${BASE_CURRENCY_CODE.toLowerCase()}.json`);
@@ -109,7 +108,7 @@ export async function fetchLiveRates(): Promise<RatesSnapshot> {
       saveCache(snapshot);
       return snapshot;
 
-    } catch (errFallback) {
+    } catch {
       throw new Error('Semua layanan penyedia kurs sedang tidak dapat diakses saat ini. Menggunakan kurs referensi offline.');
     }
   }

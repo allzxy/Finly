@@ -20,12 +20,17 @@ export default function CategoryDonut({ segments, centerLabel, centerValue }: Pr
   const total = segments.reduce((s, seg) => s + seg.value, 0);
   const gap = segments.length > 1 ? 2.2 : 0;
 
-  let cumulative = 0;
-  const arcs = segments.map((seg) => {
+  const cumulatives: number[] = [];
+  let currentCum = 0;
+  for (const seg of segments) {
+    cumulatives.push(currentCum);
+    currentCum += seg.value;
+  }
+
+  const arcs = segments.map((seg, i) => {
     const fraction = total > 0 ? seg.value / total : 0;
     const length = Math.max(0, fraction * CIRCUMFERENCE - gap);
-    const offset = -(cumulative / total) * CIRCUMFERENCE;
-    cumulative += seg.value;
+    const offset = -(cumulatives[i] / total) * CIRCUMFERENCE;
     return { ...seg, length, offset, fraction };
   });
 

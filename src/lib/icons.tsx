@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   Landmark, Laptop, Gift, ShoppingCart, UtensilsCrossed, Bus, Home, Plug,
   HeartPulse, Clapperboard, ShoppingBag, Repeat, Wallet as WalletIcon,

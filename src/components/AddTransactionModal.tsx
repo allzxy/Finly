@@ -34,6 +34,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
   useEffect(() => {
     if (!open) return;
     if (editing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setType(editing.type);
       setDescription(editing.description);
       setAmount(String(Number(toDisplay(editing.amount).toFixed(2))));
@@ -92,7 +93,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
   };
 
   const handleAmountChange = (val: string) => {
-    let s = val.replace(/,/g, '.').replace(/[^\d.]/g, '');
+    const s = val.replace(/,/g, '.').replace(/[^\d.]/g, '');
     const p = s.split('.');
     setAmount(p.length > 2 ? p[0] + '.' + p.slice(1).join('') : s);
   };
