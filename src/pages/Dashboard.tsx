@@ -8,7 +8,6 @@ import CategoryBreakdown from '../components/CategoryBreakdown';
 import TransactionList from '../components/TransactionList';
 import MonthFilter from '../components/MonthFilter';
 import Topbar from '../components/Topbar';
-import AddTransactionModal from '../components/AddTransactionModal';
 
 function prevMonthKey(month: string) {
   const [y, m] = month.split('-').map(Number);
@@ -25,7 +24,6 @@ export default function Dashboard() {
   const { transactions, categories, wallets, selectedMonth, setSelectedMonth } = useFinance();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [showAdd, setShowAdd] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const monthTx = useMemo(() => transactions.filter((tx) => tx.date.slice(0, 7) === selectedMonth), [transactions, selectedMonth]);
@@ -69,7 +67,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Topbar title={t('dashboard.title')} subtitle={t('dashboard.subtitle')} onAddTransaction={() => setShowAdd(true)} />
+      <Topbar title={t('dashboard.title')} subtitle={t('dashboard.subtitle')} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MonthFilter value={selectedMonth} onChange={handleMonthChange} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
         {selectedDate && (
@@ -96,8 +94,6 @@ export default function Dashboard() {
       
       {/* TransactionList menerima recentTx untuk menampilkan riwayat transaksi terbaru */}
       <TransactionList transactions={recentTx} preview />
-      
-      <AddTransactionModal open={showAdd} onClose={() => setShowAdd(false)} />
     </div>
   );
 }
