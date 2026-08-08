@@ -39,19 +39,37 @@ interface FinanceContextValue extends FinanceState {
 const STORAGE_KEY = 'cakumu-data-empty-v1';
 
 function loadInitial(): FinanceState {
-  const initialCategories = DEFAULT_CATEGORIES.filter((c) => c.system);
+  const initialCategories = DEFAULT_CATEGORIES;
 
   if (typeof window !== 'undefined') {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
+        let categories: Category[] = parsed.categories ?? initialCategories;
+        
+        // Memulihkan kategori standar jika data lokal sebelumnya hanya berisi kategori sistem
+        const hasNonSystem = categories.some((c) => !c.system);
+        if (!hasNonSystem) {
+          const nonSystemDefaults = DEFAULT_CATEGORIES.filter((c) => !c.system);
+          categories = [...nonSystemDefaults, ...categories];
+        }
+
+        // Membersihkan transaksi pengeluaran yang secara tidak sengaja ter-assign ke kategori 'c-topup-in' (Isi Saldo)
+        const fallbackExpenseCat = categories.find((c) => c.type === 'expense' && !c.system)?.id ?? 'c-shopping';
+        const transactions: Transaction[] = (parsed.transactions ?? []).map((tr: Transaction) => {
+          if (tr.type === 'expense' && tr.categoryId === 'c-topup-in' && !tr.linkedWalletId) {
+            return { ...tr, categoryId: fallbackExpenseCat };
+          }
+          return tr;
+        });
+
         return {
           wallets: parsed.wallets ?? [],
-          categories: parsed.categories ?? initialCategories,
-          transactions: parsed.transactions ?? [],
+          categories,
+          transactions,
           currencyCode: parsed.currencyCode ?? 'IDR',
-          selectedMonth: parsed.selectedMonth ?? currentMonthKey(),
+          selectedMonth: currentMonthKey(),
         };
       }
     } catch {}
@@ -125,7 +143,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           ? { ...w, balance: w.balance + (tx.type === 'income' ? tx.amount : -tx.amount) }
           : w
       );
-      return { ...s, transactions: [tx, ...s.transactions], wallets };
+      const txMonth = tx.date.slice(0, 7);
+      return { ...s, transactions: [tx, ...s.transactions], wallets, selectedMonth: txMonth };
     });
   }, []);
 
@@ -214,7 +233,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         amount,
       };
       const wallets = s.wallets.map((w) => (w.id === walletId ? { ...w, balance: w.balance + amount } : w));
-      return { ...s, transactions: [tx, ...s.transactions], wallets };
+      const txMonth = date.slice(0, 7);
+      return { ...s, transactions: [tx, ...s.transactions], wallets, selectedMonth: txMonth };
     });
   }, [t]);
 
@@ -255,8 +275,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           if (w.id === toWalletId) return { ...w, balance: w.balance + amount };
           return w;
         });
+        const txMonth = date.slice(0, 7);
 
-        return { ...s, transactions: [inTx, outTx, ...s.transactions], wallets };
+        return { ...s, transactions: [inTx, outTx, ...s.transactions], wallets, selectedMonth: txMonth };
       });
     },
     [t]
@@ -293,8 +314,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           if (w.id === savingsWalletId) return { ...w, balance: w.balance + amount, linkedWalletId: targetWalletId };
           return w;
         });
+        const txMonth = date.slice(0, 7);
 
-        return { ...s, transactions: [tx, ...s.transactions], wallets };
+        return { ...s, transactions: [tx, ...s.transactions], wallets, selectedMonth: txMonth };
       });
     },
     [t]

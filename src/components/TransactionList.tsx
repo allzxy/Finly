@@ -95,12 +95,13 @@ export default function TransactionList({ transactions, preview = false }: Props
             const cat = categories.find((c) => c.id === tx.categoryId);
             const Icon = cat?.icon ? CATEGORY_ICONS[cat.icon] : undefined;
             const dateObj = new Date(tx.date + 'T00:00:00');
+            const categoryLabel = cat && !cat.system ? cat.name : (tx.type === 'income' ? t('categories.income') : t('categories.expense'));
             return (
               <div key={tx.id} className="group flex items-center gap-2.5 rounded-xl px-1.5 py-2.5 transition hover:bg-[var(--color-surface-alt)] sm:gap-3 sm:px-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9" style={{ backgroundColor: `${cat?.color ?? '#999'}20`, color: cat?.color ?? '#999' }}>{Icon ? <Icon size={14} /> : null}</div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-medium text-[var(--color-ink)] sm:text-sm">{tx.description}</p>
-                  <p className="truncate text-[11px] text-[var(--color-muted)] sm:text-xs">{cat?.name ?? t('common.uncategorized')} · {dateObj.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                  <p className="truncate text-[11px] text-[var(--color-muted)] sm:text-xs">{categoryLabel} · {dateObj.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}</p>
                 </div>
                 <p className={`shrink-0 text-right text-[13px] font-semibold sm:text-sm ${tx.type === 'income' ? 'text-[var(--color-primary)]' : 'text-[var(--color-ink)]'}`}>{tx.type === 'income' ? '+' : '−'}{formatMoney(toDisplay(tx.amount), currency)}</p>
                 <div className="relative shrink-0">

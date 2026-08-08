@@ -62,6 +62,11 @@ export default function Dashboard() {
 
   const handleMonthChange = (month: string) => { setSelectedMonth(month); setSelectedDate(null); };
 
+  const recentTx = useMemo(() => {
+    if (selectedDate || scopedTx.length > 0) return scopedTx;
+    return transactions;
+  }, [selectedDate, scopedTx, transactions]);
+
   return (
     <div className="flex flex-col gap-6">
       <Topbar title={t('dashboard.title')} subtitle={t('dashboard.subtitle')} onAddTransaction={() => setShowAdd(true)} />
@@ -89,10 +94,8 @@ export default function Dashboard() {
         <div className="xl:col-span-2"><CategoryBreakdown transactions={scopedTx} categories={categories} onManage={() => navigate('/categories')} /></div>
       </div>
       
-      {/* PERBAIKAN 3: TransactionList tetap menerima scopedTx secara keseluruhan.
-          Dengan ini, semua jenis riwayat (Pemasukan, Pengeluaran, dan Tabungan) 
-          akan muncul sebagai "Riwayat Terbaru" berdasarkan urutan waktu. */}
-      <TransactionList transactions={scopedTx} preview />
+      {/* TransactionList menerima recentTx untuk menampilkan riwayat transaksi terbaru */}
+      <TransactionList transactions={recentTx} preview />
       
       <AddTransactionModal open={showAdd} onClose={() => setShowAdd(false)} />
     </div>

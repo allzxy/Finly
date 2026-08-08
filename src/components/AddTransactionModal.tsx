@@ -62,7 +62,12 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
     if (!description.trim() || !parsedAmount || parsedAmount <= 0 || !walletId) return;
-    const finalCategory = categoryId || filteredCategories[0]?.id || categories[0]?.id;
+    
+    const nonSystemCats = categories.filter((c) => c.type === type && !c.system);
+    const finalCategory =
+      categoryId && categories.some((c) => c.id === categoryId && c.type === type)
+        ? categoryId
+        : nonSystemCats[0]?.id || categories.find((c) => c.type === type)?.id || categories[0]?.id;
 
     if (isEditing && editing) {
       updateTransaction(editing.id, {
