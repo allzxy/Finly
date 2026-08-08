@@ -5,7 +5,7 @@ import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatMoney } from '../lib/currencies';
 import { CATEGORY_ICONS } from '../lib/icons';
-import { Receipt, Trash2, ListFilter, MoreVertical, Pencil, X, ChevronRight, Trash } from 'lucide-react';
+import { Receipt, Trash2, ListFilter, MoreVertical, Pencil, X, ChevronRight, Trash, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import AddTransactionModal from './AddTransactionModal';
 import TransactionFilterModal, { type TransactionFilters } from './TransactionFilterModal';
 import ConfirmModal from './ConfirmModal';
@@ -89,16 +89,17 @@ export default function TransactionList({ transactions, preview = false }: Props
       {sorted.length === 0 ? (
         <p className="py-10 text-center text-sm text-[var(--color-muted)]">{isFiltered ? t('tx.emptyFiltered') : t('tx.empty')}</p>
       ) : (
-        /* PERBAIKAN BUG: max-h dan overflow-y-auto dihapus agar menu bisa melayang bebas tanpa terpotong batas kontainer */
         <div className="flex flex-col gap-1">
           {sorted.map((tx) => {
             const cat = categories.find((c) => c.id === tx.categoryId);
-            const Icon = cat?.icon ? CATEGORY_ICONS[cat.icon] : undefined;
+            const Icon = cat?.icon ? CATEGORY_ICONS[cat.icon] : (tx.type === 'income' ? ArrowDownToLine : ArrowUpFromLine);
             const dateObj = new Date(tx.date + 'T00:00:00');
-            const categoryLabel = cat && !cat.system ? cat.name : (tx.type === 'income' ? t('categories.income') : t('categories.expense'));
+            const categoryLabel = cat && !cat.system && tx.categoryId ? cat.name : (tx.type === 'income' ? t('categories.income') : t('categories.expense'));
+            const iconBgColor = cat?.color ? `${cat.color}20` : (tx.type === 'income' ? 'var(--color-primary-soft)' : 'var(--color-warn-soft)');
+            const iconTextColor = cat?.color ?? (tx.type === 'income' ? 'var(--color-primary)' : 'var(--color-warn)');
             return (
               <div key={tx.id} className="group flex items-center gap-2.5 rounded-xl px-1.5 py-2.5 transition hover:bg-[var(--color-surface-alt)] sm:gap-3 sm:px-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9" style={{ backgroundColor: `${cat?.color ?? '#999'}20`, color: cat?.color ?? '#999' }}>{Icon ? <Icon size={14} /> : null}</div>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9" style={{ backgroundColor: iconBgColor, color: iconTextColor }}>{Icon ? <Icon size={14} /> : null}</div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-medium text-[var(--color-ink)] sm:text-sm">{tx.description}</p>
                   <p className="truncate text-[11px] text-[var(--color-muted)] sm:text-xs">{categoryLabel} · {dateObj.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}</p>

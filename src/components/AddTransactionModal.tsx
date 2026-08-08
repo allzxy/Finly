@@ -63,11 +63,10 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
     const parsedAmount = parseFloat(amount);
     if (!description.trim() || !parsedAmount || parsedAmount <= 0 || !walletId) return;
     
-    const nonSystemCats = categories.filter((c) => c.type === type && !c.system);
     const finalCategory =
       categoryId && categories.some((c) => c.id === categoryId && c.type === type)
         ? categoryId
-        : nonSystemCats[0]?.id || categories.find((c) => c.type === type)?.id || categories[0]?.id;
+        : '';
 
     if (isEditing && editing) {
       updateTransaction(editing.id, {
@@ -152,14 +151,22 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
         <SelectField
           label={t('addTx.category')}
           modalTitle={t('filter.category')}
-          value={categoryId || filteredCategories[0]?.id || ''}
+          value={categoryId}
           onChange={setCategoryId}
-          options={filteredCategories.map((c) => ({
-            value: c.id,
-            label: c.name,
-            icon: CATEGORY_ICONS[c.icon],
-            color: c.color,
-          }))}
+          placeholder={type === 'income' ? t('categories.income') : t('categories.expense')}
+          options={[
+            {
+              value: '',
+              label: type === 'income' ? t('categories.income') : t('categories.expense'),
+              color: type === 'income' ? '#1f7a5c' : '#c1704a',
+            },
+            ...filteredCategories.map((c) => ({
+              value: c.id,
+              label: c.name,
+              icon: CATEGORY_ICONS[c.icon],
+              color: c.color,
+            })),
+          ]}
         />
 
         <SelectField

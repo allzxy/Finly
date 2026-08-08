@@ -30,9 +30,9 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
         const cat = categories.find((c) => c.id === categoryId);
         return {
           categoryId,
-          name: cat?.name ?? t('common.uncategorized'),
+          name: cat && !cat.system && categoryId ? cat.name : t('categories.expense'),
           value,
-          color: cat?.color ?? '#999',
+          color: cat?.color ?? 'var(--color-warn)',
           icon: cat?.icon,
           limit: cat?.monthlyLimit,
         };
