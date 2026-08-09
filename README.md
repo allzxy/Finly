@@ -1,73 +1,125 @@
-# React + TypeScript + Vite
+<div align="center">
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+  <h1>💰 Cakumu — Catat Keuangan Mu</h1>
 
-Currently, two official plugins are available:
+  <p>
+    <b>Aplikasi Pelacak & Pencatat Keuangan Pribadi Modern, Ringan, Sangat Cepat, & Offline-First.</b>
+  </p>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+  <p>
+    <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" /></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+    <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" /></a>
+    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-4.2-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" /></a>
+    <a href="https://github.com/allzxy/Cakumu/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License" /></a>
+  </p>
 
-## React Compiler
+  <p>
+    <a href="#-fitur-unggulan">Fitur Utama</a> •
+    <a href="#-teknologi-utama">Teknologi</a> •
+    <a href="#-panduan-instalasi">Panduan Instalasi</a> •
+    <a href="#-struktur-proyek">Struktur Proyek</a> •
+    <a href="#-lisensi">Lisensi</a>
+  </p>
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+  ---
 
-## Expanding the ESLint configuration
+</div>
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 📌 Sekilas Tentang Cakumu
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+**Cakumu** (*Catat Keuangan Mu*) adalah aplikasi web pencatatan keuangan pribadi modern berdesain *frosted glassmorphism* yang dirancang untuk kecepatan tinggi, fleksibilitas multi-dompet, dan privasi penuh. Seluruh data keuangan Anda tersimpan 100% secara lokal di perangkat Anda (*Offline-First*).
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## ✨ Fitur Unggulan
+
+- 📊 **Dasbor & Nisbah Anggaran Bulanan**: Monitoring total saldo gabungan, grafik transaksi harian, diagram lingkaran kategori pengeluaran, serta indikator kesehatan nisbah pengeluaran bulanan (*Budget Health Bar*).
+- 💳 **Manajemen Multi-Dompet**: Kelola akun kas tunai, rekening bank, e-wallet, dan tabungan khusus secara terpisah. Mendukung fitur **Transfer Uang** antar dompet tanpa merusak alur pemasukan/pengeluaran luar.
+- 🎯 **Target Tabungan (*Savings Goals*)**: Tetapkan impian tabungan dengan persentase progres real-time. Menabung hanya mengalokasikan saldo tabungan tanpa mempengaruhi saldo nyata di dasbor.
+- ⏱️ **Pencatatan Jam Real-Time Otomatis**: Setiap transaksi pengeluaran atau pemasukan secara otomatis menyimpan jam & menit real-time (`HH:mm`) di latar belakang dan menampilkannya dengan presisi di riwayat.
+- 🌐 **Kurs Real-Time & Multi-Mata Uang**: Konversi otomatis total saldo ke berbagai mata uang internasional (IDR, USD, EUR, SGD, JPY, MYR, dll) dengan pembaruan kurs latar belakang saat terhubung ke internet.
+- 📊 **Cadangkan & Pulihkan Format Excel (.xlsx)**: Fitur ekspor & impor cadangan data murni berformat **Microsoft Excel (.xlsx)** multi-sheet yang dapat langsung dibuka, diedit, atau dicetak di PC/HP.
+- 📱 **Dukungan Progressive Web App (PWA)**: Siap diinstall langsung ke Layar Utama (*Home Screen*) HP atau Desktop Anda sebagai aplikasi mandiri.
+- 🎨 **Desain Glassmorphism & GPU Accelerated Animations**: Tampilan antarmuka *modern dark/light mode*, modal bottom sheet bergaya iOS (`rounded-[32px]`), serta transisi halaman berakselerasi GPU (`0.22s translate3d`).
+
+---
+
+## 🛠️ Teknologi Utama
+
+Aplikasi ini dibangun menggunakan *tech stack* web modern untuk performa maksimal:
+
+- **Core**: [React 19](https://react.dev/), [TypeScript 5.9](https://www.typescriptlang.org/)
+- **Build Tool**: [Vite 7](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/), Vanilla HSL CSS Variables
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Excel Engine**: [SheetJS (XLSX)](https://sheetjs.com/)
+- **Routing**: [React Router v7 (HashRouter)](https://reactrouter.com/)
+
+---
+
+## 🚀 Panduan Instalasi
+
+### Prasyarat
+- [Node.js](https://nodejs.org/) v18.0.0 atau yang lebih baru
+- [npm](https://www.npmjs.com/) v9.0.0 atau yang lebih baru
+
+### Langkah Instalasi Lokal
+
+1. **Kloning Repositori**:
+   ```bash
+   git clone https://github.com/allzxy/Cakumu.git
+   cd Cakumu
+   ```
+
+2. **Install Dependensi**:
+   ```bash
+   npm install
+   ```
+
+3. **Jalankan Development Server**:
+   ```bash
+   npm run dev
+   ```
+   Buka browser dan akses `http://localhost:5173`.
+
+4. **Kompilasi Produksi (*Build*)**:
+   ```bash
+   npm run build
+   ```
+   Hasil kompilasi produksi siap di-deploy dan berada di folder `dist/`.
+
+---
+
+## 📁 Struktur Proyek
+
+```text
+Cakumu/
+├── public/
+│   ├── favicon.svg
+│   └── manifest.webmanifest
+├── src/
+│   ├── components/       # Komponen UI (Modal, Navbar, Chart, Cards, List)
+│   ├── context/          # Context State (Finance, Theme, Language, Toast)
+│   ├── lib/              # Utility, Seed, Exchange Rates, Excel Engine, Types
+│   ├── pages/            # Halaman (Dashboard, Wallets, Savings, Categories, History, Settings)
+│   ├── App.tsx           # Entrypoint Aplikasi & Routing
+│   ├── index.css         # Design System, Glassmorphism, & Animations
+│   └── main.tsx          # React DOM Renderer
+├── index.html            # File Template HTML Utama
+├── package.json          # Manifest Dependensi Proyek
+├── tsconfig.json         # Konfigurasi TypeScript
+└── vite.config.ts        # Konfigurasi Vite Build Tool
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 📄 Lisensi
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Proyek ini dilisensikan di bawah **Lisensi MIT** — lihat file [LICENSE](file:///c:/Users/DKV%20SMK%20AL-HUDA/Documents/Cakumu/LICENSE) untuk rincian selengkapnya.
+
+---
+
+<div align="center">
+  <sub>Dikembangkan dengan ❤️ untuk kemudahan pengelolaan keuangan pribadi.</sub>
+</div>
