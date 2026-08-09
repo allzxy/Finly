@@ -2,6 +2,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { FinanceProvider } from './context/FinanceContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { ToastProvider } from './context/ToastContext';
 import FloatingNavbar from './components/FloatingNavbar';
 import PageTransition from './components/PageTransition';
 
@@ -38,11 +39,13 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <FinanceProvider>
-          <HashRouter> 
-            <AppShell />
-          </HashRouter>
-        </FinanceProvider>
+        <ToastProvider>
+          <FinanceProvider>
+            <HashRouter> 
+              <AppShell />
+            </HashRouter>
+          </FinanceProvider>
+        </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

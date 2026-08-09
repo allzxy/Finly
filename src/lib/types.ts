@@ -33,6 +33,7 @@ export interface Category {
 export interface Transaction {
   id: string;
   date: string; // YYYY-MM-DD
+  time?: string; // HH:mm (e.g. 17:30)
   description: string;
   categoryId: string;
   walletId: string;

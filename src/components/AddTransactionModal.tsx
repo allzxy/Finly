@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from './Modal';
 import DateField from './DateField';
 import SelectField from './SelectField';
@@ -6,6 +6,7 @@ import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { CATEGORY_ICONS, WALLET_ICONS } from '../lib/icons';
 import type { Transaction, TransactionType } from '../lib/types';
+import { useToast } from '../context/ToastContext';
 
 interface Props {
   open: boolean;
@@ -13,18 +14,24 @@ interface Props {
   editing?: Transaction | null;
 }
 
+function currentTimeString(): string {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
 export default function AddTransactionModal({ open, onClose, editing }: Props) {
   const { categories, wallets, currency, addTransaction, updateTransaction, fromDisplay, toDisplay } = useFinance();
   const { t } = useLanguage();
+  const { showToast } = useToast();
   
-  // PERBAIKAN 1: Filter dompet untuk menyingkirkan dompet 'savings' (tabungan)
   const activeWallets = wallets.filter((w) => w.type !== 'savings');
 
   const [type, setType] = useState<TransactionType>('expense');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  // PERBAIKAN 2: Pastikan nilai awal default mengambil dari dompet yang nyata
   const [walletId, setWalletId] = useState(activeWallets[0]?.id ?? '');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
 
@@ -46,12 +53,11 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
       setDescription('');
       setAmount('');
       setCategoryId('');
-      // PERBAIKAN 3: Reset juga harus diarahkan ke dompet nyata, bukan tabungan
       setWalletId(activeWallets[0]?.id ?? '');
       setDate(new Date().toISOString().slice(0, 10));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editing, toDisplay]); // Menghapus dompet dari dependensi agar tidak memicu render berulang
+  }, [open, editing, toDisplay]);
 
   const reset = () => {
     setDescription('');
@@ -69,24 +75,30 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
         ? categoryId
         : '';
 
+    const nowTime = currentTimeString();
+
     if (isEditing && editing) {
       updateTransaction(editing.id, {
         date,
+        time: editing.time || nowTime,
         description: description.trim(),
         categoryId: finalCategory,
         walletId,
         type,
         amount: fromDisplay(parsedAmount),
       });
+      showToast(t('common.saveChanges'), 'success');
     } else {
       addTransaction({
         date,
+        time: nowTime,
         description: description.trim(),
         categoryId: finalCategory,
         walletId,
         type,
         amount: fromDisplay(parsedAmount),
       });
+      showToast(type === 'income' ? 'Pemasukan berhasil dicatat!' : 'Pengeluaran berhasil dicatat!', 'success');
     }
     reset();
     onClose();
@@ -173,9 +185,8 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
         <SelectField
           label={t('addTx.wallet')}
           modalTitle={t('addTx.wallet')}
-          value={walletId || activeWallets[0]?.id || ''} // Fallback ke dompet nyata
+          value={walletId || activeWallets[0]?.id || ''}
           onChange={setWalletId}
-          // PERBAIKAN 4: Render opsi pilihan hanya dari dompet nyata
           options={activeWallets.map((w) => ({
             value: w.id,
             label: w.name,
@@ -186,7 +197,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
 
         <button
           type="submit"
-          className="mt-2 rounded-xl bg-[var(--color-primary)] py-3 text-sm font-semibold text-[var(--color-primary-contrast)] shadow-[var(--shadow-flat)] transition hover:bg-[var(--color-primary-strong)]"
+          className="mt-2 rounded-xl bg-[var(--color-primary)] py-3 text-sm font-semibold text-[var(--color-primary-contrast)] shadow-[var(--shadow-flat)] transition hover:bg-[var(--color-primary-strong)] active:scale-95"
         >
           {isEditing ? t('common.saveChanges') : t('addTx.save')}
         </button>

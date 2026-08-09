@@ -102,7 +102,10 @@ export default function TransactionList({ transactions, preview = false }: Props
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9" style={{ backgroundColor: iconBgColor, color: iconTextColor }}>{Icon ? <Icon size={14} /> : null}</div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-medium text-[var(--color-ink)] sm:text-sm">{tx.description}</p>
-                  <p className="truncate text-[11px] text-[var(--color-muted)] sm:text-xs">{categoryLabel} · {dateObj.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                  <p className="truncate text-[11px] text-[var(--color-muted)] sm:text-xs">
+                    {categoryLabel} · {dateObj.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}
+                    {tx.time ? ` • ${tx.time}` : ''}
+                  </p>
                 </div>
                 <p className={`shrink-0 text-right text-[13px] font-semibold sm:text-sm ${tx.type === 'income' ? 'text-[var(--color-primary)]' : 'text-[var(--color-ink)]'}`}>{tx.type === 'income' ? '+' : '−'}{formatMoney(toDisplay(tx.amount), currency)}</p>
                 <div className="relative shrink-0">

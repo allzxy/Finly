@@ -34,6 +34,9 @@ interface FinanceContextValue extends FinanceState {
   availableMonths: string[];
   fromDisplay: (amount: number) => number;
   liveRates: LiveRatesState;
+  exportData: () => string;
+  importData: (jsonStr: string) => boolean;
+  resetAllData: () => void;
 }
 
 const STORAGE_KEY = 'cakumu-data-empty-v1';
@@ -227,9 +230,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     if (amount <= 0) return;
     setState((s) => {
       const topupCategory = s.categories.find((c) => c.id === 'c-topup-in')?.id ?? s.categories.find((c) => c.type === 'income')?.id ?? '';
+      const now = new Date();
+      const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const tx: Transaction = {
         id: uid('t'),
         date,
+        time,
         description: note?.trim() || t('tx.defaultTopup'),
         categoryId: topupCategory,
         walletId,
@@ -254,10 +260,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         const inCategory = s.categories.find((c) => c.id === 'c-topup-in')?.id ?? s.categories.find((c) => c.type === 'income')?.id ?? '';
         const label = note?.trim() || t('tx.defaultTransferOut', { name: toWallet.name });
         const labelIn = note?.trim() || t('tx.defaultTransferIn', { name: fromWallet.name });
+        const now = new Date();
+        const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         const outTx: Transaction = {
           id: uid('t'),
           date,
+          time,
           description: label,
           categoryId: outCategory,
           walletId: fromWalletId,
@@ -267,6 +276,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         const inTx: Transaction = {
           id: uid('t'),
           date,
+          time,
           description: labelIn,
           categoryId: inCategory,
           walletId: toWalletId,
@@ -296,19 +306,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         if (!savingsWallet || !targetWallet) return s;
 
         const category = s.categories.find((c) => c.id === 'c-topup-in')?.id ?? s.categories.find((c) => c.type === 'income')?.id ?? '';
+        const now = new Date();
+        const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
         const tx: Transaction = {
           id: uid('t'),
           date,
+          time,
           description: note?.trim() || t('tx.defaultSavings', { name: savingsWallet.name, target: targetWallet.name }),
           categoryId: category,
           
-          // PERBAIKAN: Transaksi ini HANYA dicatat ke riwayat dompet tabungan
-          // agar tidak terdeteksi sebagai "Pemasukan" pada dompet nyata di dasbor.
           walletId: savingsWalletId, 
           type: 'income',
           amount,
           
-          // Menyimpan jejak bahwa tabungan ini terikat dengan dompet nyata
           linkedWalletId: targetWalletId, 
         };
 
@@ -358,6 +369,52 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     return Array.from(set).sort().reverse();
   }, [state.transactions]);
 
+  const exportData = useCallback(() => {
+    return JSON.stringify(
+      {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        wallets: state.wallets,
+        categories: state.categories,
+        transactions: state.transactions,
+        currencyCode: state.currencyCode,
+      },
+      null,
+      2
+    );
+  }, [state.wallets, state.categories, state.transactions, state.currencyCode]);
+
+  const importData = useCallback((jsonStr: string): boolean => {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (!parsed || typeof parsed !== 'object') return false;
+      if (!Array.isArray(parsed.wallets) || !Array.isArray(parsed.categories) || !Array.isArray(parsed.transactions)) {
+        return false;
+      }
+
+      setState({
+        wallets: parsed.wallets,
+        categories: parsed.categories.length > 0 ? parsed.categories : DEFAULT_CATEGORIES,
+        transactions: parsed.transactions,
+        currencyCode: typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR',
+        selectedMonth: currentMonthKey(),
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const resetAllData = useCallback(() => {
+    setState({
+      wallets: [],
+      categories: DEFAULT_CATEGORIES,
+      transactions: [],
+      currencyCode: 'IDR',
+      selectedMonth: currentMonthKey(),
+    });
+  }, []);
+
   const value: FinanceContextValue = {
     ...state,
     currency,
@@ -380,6 +437,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     deleteCategory,
     availableMonths,
     liveRates,
+    exportData,
+    importData,
+    resetAllData,
   };
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
