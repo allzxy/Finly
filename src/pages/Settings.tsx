@@ -56,7 +56,7 @@ export default function Settings() {
             <h3 className="text-sm font-semibold text-[var(--color-ink)]">Cadangkan & Pulihkan Data</h3>
           </div>
           <p className="mb-3 text-xs text-[var(--color-ink-soft)]">
-            Ekspor riwayat keuangan Anda ke file JSON atau impor cadangan data dari perangkat lain.
+            Ekspor riwayat keuangan Anda ke file Excel (.xlsx) atau impor cadangan data dari perangkat lain.
           </p>
           <button
             onClick={() => setShowBackup(true)}
@@ -66,8 +66,8 @@ export default function Settings() {
               <Database size={17} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-[var(--color-ink)]">Backup & Restore JSON</span>
-              <span className="block truncate text-xs text-[var(--color-muted)]">Amankan & pindahkan data keuangan</span>
+              <span className="block text-sm font-semibold text-[var(--color-ink)]">Backup & Restore Excel (.xlsx)</span>
+              <span className="block truncate text-xs text-[var(--color-muted)]">Amankan & pindahkan data via Excel</span>
             </span>
             <ChevronRight size={16} className="shrink-0 text-[var(--color-muted)]" />
           </button>

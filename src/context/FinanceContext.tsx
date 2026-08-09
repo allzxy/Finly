@@ -4,6 +4,7 @@ import { CURRENCIES, BASE_CURRENCY_CODE, convertAmount } from '../lib/currencies
 import { useLiveRates, type LiveRatesState } from '../lib/useLiveRates';
 import { useLanguage } from './LanguageContext';
 import { DEFAULT_CATEGORIES } from '../lib/seed';
+import { exportToExcelBuffer, importFromExcelBuffer } from '../lib/excelBackup';
 
 interface FinanceState {
   wallets: Wallet[];
@@ -36,6 +37,8 @@ interface FinanceContextValue extends FinanceState {
   liveRates: LiveRatesState;
   exportData: () => string;
   importData: (jsonStr: string) => boolean;
+  exportExcelBuffer: () => Uint8Array;
+  importExcelBuffer: (buffer: ArrayBuffer) => boolean;
   resetAllData: () => void;
 }
 
@@ -405,6 +408,29 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const exportExcelBuffer = useCallback(() => {
+    return exportToExcelBuffer({
+      wallets: state.wallets,
+      categories: state.categories,
+      transactions: state.transactions,
+      currencyCode: state.currencyCode,
+    });
+  }, [state.wallets, state.categories, state.transactions, state.currencyCode]);
+
+  const importExcelBuffer = useCallback((buffer: ArrayBuffer): boolean => {
+    const data = importFromExcelBuffer(buffer);
+    if (!data) return false;
+
+    setState({
+      wallets: data.wallets,
+      categories: data.categories.length > 0 ? data.categories : DEFAULT_CATEGORIES,
+      transactions: data.transactions,
+      currencyCode: data.currencyCode || 'IDR',
+      selectedMonth: currentMonthKey(),
+    });
+    return true;
+  }, []);
+
   const resetAllData = useCallback(() => {
     setState({
       wallets: [],
@@ -439,6 +465,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     liveRates,
     exportData,
     importData,
+    exportExcelBuffer,
+    importExcelBuffer,
     resetAllData,
   };
 

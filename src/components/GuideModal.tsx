@@ -59,8 +59,8 @@ export default function GuideModal({ open, onClose }: { open: boolean; onClose: 
     {
       icon: Database,
       color: 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]',
-      title: '8. Cadangkan & Pulihkan Data (Backup JSON)',
-      desc: 'Amankan seluruh riwayat keuangan Anda dengan fitur Cadangkan Data (JSON). Data cadangan dapat diunggah kembali kapan saja di perangkat lain tanpa khawatir data terhapus.',
+      title: '8. Cadangkan & Pulihkan Data (Backup Excel .xlsx)',
+      desc: 'Amankan seluruh riwayat keuangan Anda dengan fitur Cadangkan Data (Excel .xlsx). Data cadangan dapat diunggah kembali kapan saja di perangkat lain tanpa khawatir data terhapus.',
     },
   ];
 
