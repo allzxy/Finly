@@ -1,34 +1,10 @@
-import { useMemo, useState } from 'react';
 import Modal from './Modal';
-import SelectField from './SelectField';
 import { useFinance } from '../context/FinanceContext';
-import { CURRENCIES, convertAmount, formatMoney, getRateLabel } from '../lib/currencies';
-import { ArrowLeftRight, Check, RefreshCw, Radio, WifiOff } from 'lucide-react';
+import { CURRENCIES } from '../lib/currencies';
+import { Check, RefreshCw, Radio, WifiOff } from 'lucide-react';
 
 export default function CurrencyModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { currencyCode, setCurrencyCode, liveRates } = useFinance();
-
-  const [fromCode, setFromCode] = useState('USD');
-  const [toCode, setToCode] = useState('IDR');
-  const [amount, setAmount] = useState('100');
-
-  const toCurrency = CURRENCIES.find((c) => c.code === toCode) ?? CURRENCIES[0];
-
-  const currencyOptions = useMemo(
-    () => CURRENCIES.map((c) => ({ value: c.code, label: `${c.code} — ${c.label}`, badge: c.symbol })),
-    []
-  );
-
-  const result = useMemo(() => {
-    const parsed = parseFloat(amount);
-    if (!parsed || parsed < 0) return 0;
-    return convertAmount(parsed, fromCode, toCode, liveRates.rates);
-  }, [amount, fromCode, toCode, liveRates.rates]);
-
-  const swap = () => {
-    setFromCode(toCode);
-    setToCode(fromCode);
-  };
 
   const fetchedTime = new Date(liveRates.fetchedAt).toLocaleTimeString('id-ID', {
     hour: '2-digit',
@@ -71,7 +47,7 @@ export default function CurrencyModal({ open, onClose }: { open: boolean; onClos
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-medium text-[var(--color-muted)]">Mata uang tampilan</p>
+          <p className="mb-2 text-xs font-medium text-[var(--color-muted)]">Pilih mata uang tampilan</p>
           <div className="flex flex-col gap-1">
             {CURRENCIES.map((c) => (
               <button
@@ -93,60 +69,6 @@ export default function CurrencyModal({ open, onClose }: { open: boolean; onClos
                 {currencyCode === c.code && <Check size={16} className="shrink-0 text-[var(--color-primary)]" />}
               </button>
             ))}
-          </div>
-        </div>
-
-        <div className="border-t border-[var(--color-border)] pt-4">
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-[var(--color-muted)]">
-            <ArrowLeftRight size={12} /> Konversi cepat
-          </p>
-
-          <div className="flex flex-col gap-2.5">
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)]"
-            />
-
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
-              <SelectField
-                nested
-                compact
-                modalTitle="Dari Mata Uang"
-                value={fromCode}
-                onChange={setFromCode}
-                options={currencyOptions}
-              />
-
-              <button
-                type="button"
-                onClick={swap}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-alt)] text-[var(--color-ink-soft)] transition hover:border-[var(--color-primary)]/40 hover:text-[var(--color-primary)]"
-                aria-label="Tukar mata uang"
-              >
-                <ArrowLeftRight size={14} />
-              </button>
-
-              <SelectField
-                nested
-                compact
-                modalTitle="Ke Mata Uang"
-                value={toCode}
-                onChange={setToCode}
-                options={currencyOptions}
-              />
-            </div>
-
-            <div className="min-w-0 rounded-xl bg-[var(--color-primary-soft)] px-4 py-3">
-              <p className="font-bold tracking-tight truncate text-xl text-[var(--color-primary-strong)]">
-                {formatMoney(result, toCurrency)}
-              </p>
-              <p className="mt-0.5 truncate text-[11px] text-[var(--color-primary-strong)]/80">{getRateLabel(fromCode, toCode, liveRates.rates)}</p>
-            </div>
           </div>
         </div>
       </div>

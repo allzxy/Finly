@@ -162,16 +162,16 @@ export default function FloatingNavbar() {
         </div>
       </header>
 
-      {/* 3. MOBILE FLOATING BOTTOM NAVBAR */}
-      <nav className="glass-pill fixed bottom-3 left-1/2 z-40 flex md:hidden items-center justify-around w-[calc(100%-1.5rem)] max-w-[420px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-2 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
-        {/* Dasbor & Dompet */}
+      {/* 3. MOBILE FLOATING BOTTOM NAVBAR (Perfectly Aligned 4-Column + Floating Center Button) */}
+      <nav className="glass-pill fixed bottom-3 left-1/2 z-40 flex md:hidden items-center justify-between w-[calc(100%-1.5rem)] max-w-[420px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-3 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
+        {/* Kolom 1 & 2: Dasbor & Dompet */}
         {PRIMARY_NAV_ITEMS.slice(0, 2).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-0.5 rounded-full py-1 px-2.5 transition-all ${
+              `flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 text-center transition-all active:scale-95 duration-150 ${
                 isActive
                   ? 'text-[var(--color-primary)] font-bold scale-105'
                   : 'text-[var(--color-muted)] hover:text-[var(--color-ink)]'
@@ -181,35 +181,37 @@ export default function FloatingNavbar() {
             {({ isActive }) => (
               <>
                 <div className={`flex h-7 w-7 items-center justify-center rounded-full transition ${isActive ? 'bg-[var(--color-primary-soft)]' : ''}`}>
-                  <item.icon size={17} strokeWidth={isActive ? 2.4 : 1.8} />
+                  <item.icon size={18} strokeWidth={isActive ? 2.4 : 1.8} />
                 </div>
-                <span className="text-[10px] leading-none">{item.label}</span>
+                <span className="text-[10px] font-medium leading-none mt-0.5">{item.label}</span>
               </>
             )}
           </NavLink>
         ))}
 
-        {/* Standalone Centered Floating (+) Circle Button */}
-        <button
-          onClick={() => {
-            setMoreOpen(false);
-            setAddModalOpen(true);
-          }}
-          title={t('topbar.addTransaction')}
-          aria-label={t('topbar.addTransaction')}
-          className="-mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-strong)] text-[var(--color-primary-contrast)] shadow-[0_6px_20px_rgba(31,122,92,0.45)] ring-4 ring-[var(--color-bg)] transition active:scale-90 hover:scale-105"
-        >
-          <Plus size={22} strokeWidth={2.6} />
-        </button>
+        {/* Floating Centered Action Button (+ Icon Only) */}
+        <div className="shrink-0 flex items-center justify-center px-1">
+          <button
+            onClick={() => {
+              setMoreOpen(false);
+              setAddModalOpen(true);
+            }}
+            title={t('topbar.addTransaction')}
+            aria-label={t('topbar.addTransaction')}
+            className="-mt-6 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-strong)] text-[var(--color-primary-contrast)] shadow-[0_6px_20px_rgba(31,122,92,0.45)] ring-4 ring-[var(--color-bg)] transition active:scale-90 hover:scale-105"
+          >
+            <Plus size={22} strokeWidth={2.6} />
+          </button>
+        </div>
 
-        {/* Riwayat */}
+        {/* Kolom 3: Riwayat */}
         {PRIMARY_NAV_ITEMS.slice(2).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-0.5 rounded-full py-1 px-2.5 transition-all ${
+              `flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 text-center transition-all active:scale-95 duration-150 ${
                 isActive
                   ? 'text-[var(--color-primary)] font-bold scale-105'
                   : 'text-[var(--color-muted)] hover:text-[var(--color-ink)]'
@@ -219,28 +221,28 @@ export default function FloatingNavbar() {
             {({ isActive }) => (
               <>
                 <div className={`flex h-7 w-7 items-center justify-center rounded-full transition ${isActive ? 'bg-[var(--color-primary-soft)]' : ''}`}>
-                  <item.icon size={17} strokeWidth={isActive ? 2.4 : 1.8} />
+                  <item.icon size={18} strokeWidth={isActive ? 2.4 : 1.8} />
                 </div>
-                <span className="text-[10px] leading-none">{item.label}</span>
+                <span className="text-[10px] font-medium leading-none mt-0.5">{item.label}</span>
               </>
             )}
           </NavLink>
         ))}
 
-        {/* Mobile Dropdown "Lainnya" */}
-        <div ref={moreMenuRefMobile} className="relative">
+        {/* Kolom 4: Mobile Dropdown "Lainnya" */}
+        <div ref={moreMenuRefMobile} className="flex-1 flex flex-col items-center justify-center relative">
           <button
             onClick={() => setMoreOpen((v) => !v)}
-            className={`flex flex-col items-center justify-center gap-0.5 rounded-full py-1 px-2.5 transition-all ${
+            className={`flex flex-col items-center justify-center gap-0.5 rounded-full py-1 text-center transition-all active:scale-95 duration-150 w-full ${
               isMoreActive || moreOpen
                 ? 'text-[var(--color-primary)] font-bold scale-105'
                 : 'text-[var(--color-muted)] hover:text-[var(--color-ink)]'
             }`}
           >
             <div className={`flex h-7 w-7 items-center justify-center rounded-full transition ${isMoreActive || moreOpen ? 'bg-[var(--color-primary-soft)]' : ''}`}>
-              <MoreHorizontal size={17} strokeWidth={isMoreActive || moreOpen ? 2.4 : 1.8} />
+              <MoreHorizontal size={18} strokeWidth={isMoreActive || moreOpen ? 2.4 : 1.8} />
             </div>
-            <span className="text-[10px] leading-none">Lainnya</span>
+            <span className="text-[10px] font-medium leading-none mt-0.5">Lainnya</span>
           </button>
 
           {moreOpen && (

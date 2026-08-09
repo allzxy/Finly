@@ -11,13 +11,18 @@ export interface LiveRatesState {
   refresh: () => Promise<void>;
 }
 
-/** Provides real-world exchange rates, auto-refreshed hourly, with graceful offline fallback. */
+/** Provides real-world exchange rates, auto-updated in background when online, with graceful offline fallback. */
 export function useLiveRates(): LiveRatesState {
   const [snapshot, setSnapshot] = useState<RatesSnapshot>(getInitialRates);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    // Only attempt background fetch if online
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return;
+    }
+
     setStatus('loading');
     setError(null);
     try {
@@ -32,16 +37,35 @@ export function useLiveRates(): LiveRatesState {
 
   useEffect(() => {
     const cached = getInitialRates();
-    if (!isCacheFresh(cached)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      void refresh();
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      if (!isCacheFresh(cached)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        void refresh();
+      } else {
+        setSnapshot(cached);
+        setStatus('success');
+      }
     } else {
       setSnapshot(cached);
       setStatus('success');
     }
 
-    const interval = setInterval(refresh, 60 * 60 * 1000); // hourly
-    return () => clearInterval(interval);
+    // Auto update when browser/device connects to internet
+    const handleOnline = () => {
+      void refresh();
+    };
+
+    window.addEventListener('online', handleOnline);
+    const interval = setInterval(() => {
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        void refresh();
+      }
+    }, 30 * 60 * 1000); // 30 minutes
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      clearInterval(interval);
+    };
   }, [refresh]);
 
   return {
