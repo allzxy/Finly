@@ -48,8 +48,26 @@ export default function FloatingNavbar() {
 
   return (
     <>
+      {/* 0A. AMBIENT GRADIENT-MASKED BLUR (HEADER BOTTOM ZONE) */}
+      <div 
+        className="fixed top-0 inset-x-0 z-30 pointer-events-none h-20 md:h-24 bg-gradient-to-b from-[var(--color-bg)]/90 via-[var(--color-bg)]/40 to-transparent backdrop-blur-md transition-all duration-300"
+        style={{
+          maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+        }}
+      />
+
+      {/* 0B. AMBIENT GRADIENT-MASKED BLUR (NAVBAR TOP ZONE - MOBILE ONLY) */}
+      <div 
+        className="fixed bottom-0 inset-x-0 z-30 pointer-events-none h-24 md:hidden bg-gradient-to-t from-[var(--color-bg)]/90 via-[var(--color-bg)]/40 to-transparent backdrop-blur-md transition-all duration-300"
+        style={{
+          maskImage: 'linear-gradient(to top, black 50%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to top, black 50%, transparent 100%)',
+        }}
+      />
+
       {/* 1. DESKTOP & TABLET FLOATING NAVBAR (Top Floating Pill Bar) */}
-      <header className="fixed top-4 left-1/2 z-40 hidden -translate-x-1/2 md:flex items-center justify-between gap-4 w-[calc(100%-2.5rem)] max-w-[960px] rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/85 px-4 py-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.08)] backdrop-blur-xl transition-all duration-300">
+      <header className="glass-pill fixed top-4 left-1/2 z-40 hidden -translate-x-1/2 md:flex items-center justify-between gap-4 w-[calc(100%-2.5rem)] max-w-[960px] rounded-full border border-[var(--color-border)]/80 px-4 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] transition-all duration-300">
         {/* Brand Logo */}
         <NavLink to="/" className="flex items-center gap-2.5 shrink-0 pl-1 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] text-[var(--color-primary-contrast)] shadow-sm transition transform group-hover:scale-105">
@@ -59,7 +77,7 @@ export default function FloatingNavbar() {
         </NavLink>
 
         {/* Nav Links Pill Group */}
-        <nav className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)]/60 bg-[var(--color-surface-alt)]/60 p-1">
+        <nav className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)]/60 bg-[var(--color-surface-glass-alt)] p-1">
           {PRIMARY_NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -93,7 +111,7 @@ export default function FloatingNavbar() {
             </button>
 
             {moreOpen && (
-              <div className="animate-rise absolute right-0 top-10 z-50 w-44 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-xl">
+              <div className="glass-panel animate-rise absolute right-0 top-11 z-50 w-44 overflow-hidden rounded-2xl border border-[var(--color-border)]/80 p-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)]">
                 {MORE_NAV_ITEMS.map((item) => (
                   <NavLink
                     key={item.to}
@@ -131,7 +149,7 @@ export default function FloatingNavbar() {
       </header>
 
       {/* 2. MOBILE FLOATING TOP HEADER */}
-      <header className="fixed top-3 left-1/2 z-40 flex md:hidden items-center justify-between gap-2 w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/90 px-3.5 py-2 shadow-[0_6px_25px_rgb(0,0,0,0.08)] backdrop-blur-xl">
+      <header className="glass-panel fixed top-3 left-1/2 z-40 flex md:hidden items-center justify-between gap-2 w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl border border-[var(--color-border)]/80 px-3.5 py-2 shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
         <NavLink to="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-contrast)]">
             <Leaf size={16} strokeWidth={2.4} />
@@ -145,7 +163,7 @@ export default function FloatingNavbar() {
       </header>
 
       {/* 3. MOBILE FLOATING BOTTOM NAVBAR */}
-      <nav className="fixed bottom-3 left-1/2 z-40 flex md:hidden items-center justify-around w-[calc(100%-1.5rem)] max-w-[420px] -translate-x-1/2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/90 px-2 py-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl">
+      <nav className="glass-pill fixed bottom-3 left-1/2 z-40 flex md:hidden items-center justify-around w-[calc(100%-1.5rem)] max-w-[420px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-2 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
         {/* Dasbor & Dompet */}
         {PRIMARY_NAV_ITEMS.slice(0, 2).map((item) => (
           <NavLink
@@ -226,7 +244,7 @@ export default function FloatingNavbar() {
           </button>
 
           {moreOpen && (
-            <div className="animate-rise absolute bottom-16 right-0 z-50 w-44 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/95 p-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+            <div className="glass-panel animate-rise absolute bottom-16 right-0 z-50 w-44 overflow-hidden rounded-2xl border border-[var(--color-border)]/80 p-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
               {MORE_NAV_ITEMS.map((item) => (
                 <NavLink
                   key={item.to}
