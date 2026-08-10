@@ -162,8 +162,8 @@ export default function FloatingNavbar() {
         </div>
       </header>
 
-      {/* 3. MOBILE FLOATING BOTTOM NAVBAR (Perfectly Aligned 4-Column + Floating Center Button) */}
-      <nav className="glass-pill fixed bottom-3 left-1/2 z-40 flex md:hidden items-center justify-between w-[calc(100%-1.5rem)] max-w-[420px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-3 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
+      {/* 3. MOBILE FLOATING BOTTOM NAVBAR (Adaptive for all phone screen sizes) */}
+      <nav className="glass-pill fixed bottom-3 left-1/2 z-40 flex md:hidden items-center justify-between w-[calc(100%-1rem)] max-w-[440px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-2 sm:px-3.5 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
         {/* Kolom 1 & 2: Dasbor & Dompet */}
         {PRIMARY_NAV_ITEMS.slice(0, 2).map((item) => (
           <NavLink

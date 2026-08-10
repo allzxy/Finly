@@ -172,22 +172,20 @@ body {
   backface-visibility: hidden;
 }
 
-@keyframes modal-pop {
+@keyframes dialog-pop {
   0% {
     opacity: 0;
-    transform: translate3d(0, 20px, 0) scale(0.96);
+    transform: scale(0.93) translate3d(0, 6px, 0);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: scale(1) translate3d(0, 0, 0);
   }
 }
 
 .animate-modal-pop {
-  animation: modal-pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: dialog-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -195,3 +193,30 @@ input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Global Ultra-Smooth Micro-Interaction & Active Touch Feedback */
+button, 
+a, 
+[role="button"], 
+input[type="submit"], 
+input[type="button"] {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.18s ease, 
+              background-color 0.18s ease, 
+              border-color 0.18s ease, 
+              box-shadow 0.18s ease;
+  will-change: transform;
+}
+
+button:active, 
+a:active, 
+[role="button"]:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 360px) {
+  html {
+    font-size: 15px;
+  }
+}
+

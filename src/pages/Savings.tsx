@@ -53,7 +53,7 @@ export default function Savings() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 sm:gap-4">
         {savingsWallets.map((w) => (
           <WalletCard key={w.id} wallet={w} wallets={wallets} onDelete={() => setDeleting(w)} onEdit={openEdit} onFund={setFunding} />
         ))}

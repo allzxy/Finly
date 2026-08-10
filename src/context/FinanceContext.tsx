@@ -52,31 +52,36 @@ function loadInitial(): FinanceState {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        let categories: Category[] = parsed.categories ?? initialCategories;
-        
-        // Memulihkan kategori standar jika data lokal sebelumnya hanya berisi kategori sistem
-        const hasNonSystem = categories.some((c) => !c.system);
-        if (!hasNonSystem) {
-          const nonSystemDefaults = DEFAULT_CATEGORIES.filter((c) => !c.system);
-          categories = [...nonSystemDefaults, ...categories];
-        }
-
-        // Membersihkan transaksi pengeluaran yang secara tidak sengaja ter-assign ke kategori 'c-topup-in' (Isi Saldo)
-        const fallbackExpenseCat = categories.find((c) => c.type === 'expense' && !c.system)?.id ?? 'c-shopping';
-        const transactions: Transaction[] = (parsed.transactions ?? []).map((tr: Transaction) => {
-          if (tr.type === 'expense' && tr.categoryId === 'c-topup-in' && !tr.linkedWalletId) {
-            return { ...tr, categoryId: fallbackExpenseCat };
+        if (parsed && typeof parsed === 'object') {
+          let categories: Category[] = Array.isArray(parsed.categories) ? parsed.categories : initialCategories;
+          
+          // Memulihkan kategori standar jika data lokal sebelumnya hanya berisi kategori sistem
+          const hasNonSystem = categories.some((c) => c && !c.system);
+          if (!hasNonSystem) {
+            const nonSystemDefaults = DEFAULT_CATEGORIES.filter((c) => !c.system);
+            categories = [...nonSystemDefaults, ...categories];
           }
-          return tr;
-        });
 
-        return {
-          wallets: parsed.wallets ?? [],
-          categories,
-          transactions,
-          currencyCode: parsed.currencyCode ?? 'IDR',
-          selectedMonth: currentMonthKey(),
-        };
+          // Membersihkan transaksi pengeluaran yang secara tidak sengaja ter-assign ke kategori 'c-topup-in' (Isi Saldo)
+          const fallbackExpenseCat = categories.find((c) => c && c.type === 'expense' && !c.system)?.id ?? 'c-shopping';
+          const rawTx = Array.isArray(parsed.transactions) ? parsed.transactions : [];
+          const transactions: Transaction[] = rawTx.map((tr: Transaction) => {
+            if (tr && tr.type === 'expense' && tr.categoryId === 'c-topup-in' && !tr.linkedWalletId) {
+              return { ...tr, categoryId: fallbackExpenseCat };
+            }
+            return tr;
+          });
+
+          const wallets = Array.isArray(parsed.wallets) ? parsed.wallets : [];
+
+          return {
+            wallets,
+            categories,
+            transactions,
+            currencyCode: typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR',
+            selectedMonth: currentMonthKey(),
+          };
+        }
       }
     } catch {
       /* ignore storage read error */

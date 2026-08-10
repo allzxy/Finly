@@ -28,8 +28,8 @@ export default function WalletFormModal({ open, onClose, editing, mode = 'all' }
       { value: 'savings' as WalletType, label: t('wallets.type.savings'), icon: PiggyBank },
       { value: 'digital' as WalletType, label: t('wallets.type.digital'), icon: Smartphone },
     ];
-    if (mode === 'wallets') return options.filter(o => o.value !== 'savings');
-    if (mode === 'savings') return options.filter(o => o.value === 'savings');
+    if (mode === 'wallets') return options.filter((o) => o.value !== 'savings');
+    if (mode === 'savings') return options.filter((o) => o.value === 'savings');
     return options;
   }, [t, mode]);
 
@@ -89,28 +89,60 @@ export default function WalletFormModal({ open, onClose, editing, mode = 'all' }
 
   return (
     <Modal open={open} onClose={onClose} title={isEditing ? t('wallets.edit') : mode === 'savings' ? t('savings.new') : t('wallets.new')}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 pb-1">
         <div>
           <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">{t('wallets.name')}</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('wallets.namePlaceholder')} required className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)]" />
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t('wallets.namePlaceholder')}
+            required
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)]"
+          />
         </div>
 
-        {/* Jika mode='savings', kolom ini otomatis terkunci ke Target Tabungan */}
-        <SelectField label={t('wallets.type')} modalTitle={t('wallets.type')} nested value={type} onChange={(v) => setType(v as WalletType)} options={TYPE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label, icon: opt.icon }))} />
+        {/* Tampilkan Pilihan Tipe hanya jika opsi > 1 */}
+        {TYPE_OPTIONS.length > 1 && (
+          <SelectField
+            label={t('wallets.type')}
+            modalTitle={t('wallets.type')}
+            nested
+            value={type}
+            onChange={(v) => setType(v as WalletType)}
+            options={TYPE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label, icon: opt.icon }))}
+          />
+        )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Untuk tabungan baru, jadikan input Jumlah Target Tabungan sebagai yang utama */}
+          {type === 'savings' && (
+            <div>
+              <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                {t('wallets.targetAmount')} ({currency.symbol})
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={goal}
+                onChange={(e) => handleNumberChange(e.target.value, setGoal)}
+                placeholder="0.00"
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)]"
+              />
+            </div>
+          )}
+
           <div>
             <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
               {type === 'savings' ? t('wallets.collected') : t('wallets.startingBalance')} ({currency.symbol})
             </label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               inputMode="decimal"
-              value={balance} 
-              onChange={(e) => handleNumberChange(e.target.value, setBalance)} 
-              placeholder="0.00" 
-              disabled={isEditing || type === 'savings'} 
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)] disabled:opacity-50" 
+              value={balance}
+              onChange={(e) => handleNumberChange(e.target.value, setBalance)}
+              placeholder="0.00"
+              disabled={isEditing || type === 'savings'}
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)] disabled:opacity-50"
             />
             {isEditing ? (
               <p className="mt-1 text-[11px] text-[var(--color-muted)]">{t('wallets.editHint')}</p>
@@ -118,28 +150,24 @@ export default function WalletFormModal({ open, onClose, editing, mode = 'all' }
               <p className="mt-1 text-[11px] text-[var(--color-muted)]">{t('wallets.savingsHint')}</p>
             ) : null}
           </div>
-          {type === 'savings' && (
-            <div>
-              <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">{t('wallets.targetAmount')} ({currency.symbol})</label>
-              <input 
-                type="text" 
-                inputMode="decimal"
-                value={goal} 
-                onChange={(e) => handleNumberChange(e.target.value, setGoal)} 
-                placeholder="0.00" 
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)]" 
-              />
-            </div>
-          )}
+
           {type === 'bank' && (
             <div>
               <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">{t('wallets.bankName')}</label>
-              <input value={institution} onChange={(e) => setInstitution(e.target.value)} placeholder={t('wallets.bankNamePlaceholder')} className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)]" />
+              <input
+                value={institution}
+                onChange={(e) => setInstitution(e.target.value)}
+                placeholder={t('wallets.bankNamePlaceholder')}
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)]"
+              />
             </div>
           )}
         </div>
 
-        <button type="submit" className="mt-2 rounded-xl bg-[var(--color-primary)] py-3 text-sm font-semibold text-[var(--color-primary-contrast)] shadow-[var(--shadow-flat)] transition hover:bg-[var(--color-primary-strong)]">
+        <button
+          type="submit"
+          className="mt-2 rounded-xl bg-[var(--color-primary)] py-3 text-sm font-semibold text-[var(--color-primary-contrast)] shadow-[var(--shadow-flat)] transition hover:bg-[var(--color-primary-strong)] active:scale-[0.98]"
+        >
           {isEditing ? t('common.saveChanges') : mode === 'savings' ? t('savings.new') : t('wallets.create')}
         </button>
       </form>
