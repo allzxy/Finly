@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutGrid, Wallet, PiggyBank, Tag, History, Settings, Leaf, Plus, MoreHorizontal } from 'lucide-react';
+import { LayoutGrid, Wallet, PiggyBank, Tag, History, Settings, Plus, MoreHorizontal } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import ThemeToggle from './ThemeToggle';
 import AddTransactionModal from './AddTransactionModal';
+import PocketIcon from './PocketIcon';
 
 export default function FloatingNavbar() {
   const { t } = useLanguage();
@@ -70,10 +71,10 @@ export default function FloatingNavbar() {
       <header className="glass-pill fixed top-4 left-1/2 z-40 hidden -translate-x-1/2 md:flex items-center justify-between gap-4 w-[calc(100%-2.5rem)] max-w-[960px] rounded-full border border-[var(--color-border)]/80 px-4 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] transition-all duration-300">
         {/* Brand Logo */}
         <NavLink to="/" className="flex items-center gap-2.5 shrink-0 pl-1 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] text-[var(--color-primary-contrast)] shadow-sm transition transform group-hover:scale-105">
-            <Leaf size={18} strokeWidth={2.4} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shadow-xs transition transform group-hover:scale-105">
+            <PocketIcon size={36} />
           </div>
-          <span className="font-bold tracking-tight text-base text-[var(--color-ink)]">Cakumu</span>
+          <span className="font-bold tracking-tight text-lg text-[var(--color-ink)]">Finly</span>
         </NavLink>
 
         {/* Nav Links Pill Group */}
@@ -84,54 +85,17 @@ export default function FloatingNavbar() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `relative flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                `flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                   isActive
-                    ? 'bg-[var(--color-primary)] text-[var(--color-primary-contrast)] shadow-sm scale-[1.02]'
-                    : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)]'
+                    ? 'bg-[var(--color-primary)] text-[var(--color-primary-contrast)] shadow-sm scale-102'
+                    : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-glass)] hover:text-[var(--color-ink)]'
                 }`
               }
             >
-              <item.icon size={15} strokeWidth={2} />
+              <item.icon size={15} />
               <span>{item.label}</span>
             </NavLink>
           ))}
-
-          {/* Menu Dropdown "Lainnya" */}
-          <div ref={moreMenuRefDesktop} className="relative">
-            <button
-              onClick={() => setMoreOpen((v) => !v)}
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                isMoreActive || moreOpen
-                  ? 'bg-[var(--color-primary)] text-[var(--color-primary-contrast)] shadow-sm scale-[1.02]'
-                  : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)]'
-              }`}
-            >
-              <MoreHorizontal size={15} strokeWidth={2} />
-              <span>Lainnya</span>
-            </button>
-
-            {moreOpen && (
-              <div className="glass-panel animate-rise absolute right-0 top-11 z-50 w-44 overflow-hidden rounded-2xl border border-[var(--color-border)]/80 p-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)]">
-                {MORE_NAV_ITEMS.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setMoreOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition ${
-                        isActive
-                          ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary-strong)] font-semibold'
-                          : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-ink)]'
-                      }`
-                    }
-                  >
-                    <item.icon size={15} strokeWidth={2} />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </div>
         </nav>
 
         {/* Right Actions: Standalone Floating Plus Button & Theme Toggle */}
@@ -150,11 +114,11 @@ export default function FloatingNavbar() {
 
       {/* 2. MOBILE FLOATING TOP HEADER */}
       <header className="glass-panel fixed top-3 left-1/2 z-40 flex md:hidden items-center justify-between gap-2 w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl border border-[var(--color-border)]/80 px-3.5 py-2 shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
-        <NavLink to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-contrast)]">
-            <Leaf size={16} strokeWidth={2.4} />
+        <NavLink to="/" className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden shadow-xs">
+            <PocketIcon size={32} />
           </div>
-          <span className="font-bold tracking-tight text-sm text-[var(--color-ink)]">Cakumu</span>
+          <span className="font-bold tracking-tight text-base text-[var(--color-ink)]">Finly</span>
         </NavLink>
 
         <div className="flex items-center gap-2">

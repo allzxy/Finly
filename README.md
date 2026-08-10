@@ -1,6 +1,6 @@
 <div align="center">
 
-  <h1>💰 Cakumu — Catat Keuangan Mu</h1>
+  <h1>💰 Finly — Sahabat Keuangan Pribadimu</h1>
 
   <p>
     <b>Aplikasi Pelacak & Pencatat Keuangan Pribadi Modern, Ringan, Sangat Cepat, & Offline-First.</b>
@@ -11,7 +11,7 @@
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
     <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-7.3-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" /></a>
     <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-4.2-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" /></a>
-    <a href="https://github.com/allzxy/Cakumu/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License" /></a>
+    <a href="https://github.com/allzxy/Finly/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License" /></a>
   </p>
 
   <p>
@@ -26,9 +26,9 @@
 
 </div>
 
-## 📌 Sekilas Tentang Cakumu
+## 📌 Sekilas Tentang Finly
 
-**Cakumu** (*Catat Keuangan Mu*) adalah aplikasi web pencatatan keuangan pribadi modern berdesain *frosted glassmorphism* yang dirancang untuk kecepatan tinggi, fleksibilitas multi-dompet, dan privasi penuh. Seluruh data keuangan Anda tersimpan 100% secara lokal di perangkat Anda (*Offline-First*).
+**Finly** (*Finance + Friendly*) adalah aplikasi web pencatatan keuangan pribadi modern berdesain *frosted glassmorphism* yang dirancang untuk kecepatan tinggi, fleksibilitas multi-dompet, dan privasi penuh. Seluruh data keuangan Anda tersimpan 100% secara lokal di perangkat Anda (*Offline-First*).
 
 ---
 
@@ -68,8 +68,8 @@ Aplikasi ini dibangun menggunakan *tech stack* web modern untuk performa maksima
 
 1. **Kloning Repositori**:
    ```bash
-   git clone https://github.com/allzxy/Cakumu.git
-   cd Cakumu
+   git clone https://github.com/allzxy/Finly.git
+   cd Finly
    ```
 
 2. **Install Dependensi**:
@@ -94,7 +94,7 @@ Aplikasi ini dibangun menggunakan *tech stack* web modern untuk performa maksima
 ## 📁 Struktur Proyek
 
 ```text
-Cakumu/
+Finly/
 ├── public/
 │   ├── favicon.svg
 │   └── manifest.webmanifest

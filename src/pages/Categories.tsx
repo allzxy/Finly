@@ -7,7 +7,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { formatMoney } from '../lib/currencies';
 import { CATEGORY_ICONS } from '../lib/icons';
 import type { Category, TransactionType } from '../lib/types';
-import { Plus, Pencil, Trash2, Wallet2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Wallet2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 export default function Categories() {
   const { categories, transactions, selectedMonth, deleteCategory, currency, toDisplay } = useFinance();
@@ -19,13 +19,14 @@ export default function Categories() {
 
   const list = categories.filter((c) => c.type === tab && !c.system);
 
-  const spentByCategory = useMemo(() => {
+  // Calculates total amount spent/earned for each category in the selected month
+  const categoryTotals = useMemo(() => {
     const map = new Map<string, number>();
     transactions
-      .filter((tx) => tx.type === 'expense' && tx.date.slice(0, 7) === selectedMonth)
+      .filter((tx) => tx.type === tab && tx.date.slice(0, 7) === selectedMonth && !tx.linkedWalletId)
       .forEach((tx) => map.set(tx.categoryId, (map.get(tx.categoryId) ?? 0) + tx.amount));
     return map;
-  }, [transactions, selectedMonth]);
+  }, [transactions, tab, selectedMonth]);
 
   const openCreate = () => {
     setEditing(null);
@@ -47,15 +48,23 @@ export default function Categories() {
             <button
               key={txType}
               onClick={() => setTab(txType)}
-              className={`flex-1 rounded-full py-2 transition ${
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-full py-2 transition font-semibold ${
                 tab === txType
                   ? txType === 'income'
-                    ? 'bg-[var(--color-primary)] text-[var(--color-primary-contrast)] shadow-sm'
-                    : 'bg-[var(--color-warn)] text-[var(--color-warn-contrast)] shadow-sm'
-                  : 'text-[var(--color-ink-soft)]'
+                    ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                    : 'bg-[var(--color-warn)] text-white shadow-sm'
+                  : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'
               }`}
             >
-              {txType === 'income' ? t('categories.income') : t('categories.expense')}
+              {txType === 'income' ? (
+                <>
+                  <ArrowUpRight size={16} /> {t('categories.income')}
+                </>
+              ) : (
+                <>
+                  <ArrowDownLeft size={16} /> {t('categories.expense')}
+                </>
+              )}
             </button>
           ))}
         </div>
@@ -64,7 +73,7 @@ export default function Categories() {
           onClick={openCreate}
           className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--color-border)] py-2.5 text-sm font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-primary)]/50 hover:text-[var(--color-primary)]"
         >
-          <Plus size={15} /> {t('categories.new')}
+          <Plus size={15} /> {tab === 'income' ? t('categories.newIncome') : t('categories.newExpense')}
         </button>
 
         {list.length === 0 ? (
@@ -75,53 +84,72 @@ export default function Categories() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {list.map((c) => {
               const Icon = CATEGORY_ICONS[c.icon];
-              const spent = spentByCategory.get(c.id) ?? 0;
+              const totalAmount = categoryTotals.get(c.id) ?? 0;
               const hasLimit = tab === 'expense' && !!c.monthlyLimit;
-              const pct = hasLimit ? Math.min(100, (spent / (c.monthlyLimit ?? 1)) * 100) : 0;
-              const overLimit = hasLimit && spent > (c.monthlyLimit ?? 0);
+              const pct = hasLimit ? Math.min(100, (totalAmount / (c.monthlyLimit ?? 1)) * 100) : 0;
+              const overLimit = hasLimit && totalAmount > (c.monthlyLimit ?? 0);
 
               return (
                 <div
                   key={c.id}
-                  className="rounded-xl border border-[var(--color-border)] px-3 py-3 transition hover:bg-[var(--color-surface-alt)]"
+                  className="relative overflow-hidden rounded-xl border border-[var(--color-border)] p-3.5 transition hover:bg-[var(--color-surface-alt)]"
                 >
+                  {/* Distinct Type Badge Header */}
+                  <div className="mb-2 flex items-center justify-between">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${
+                        c.type === 'income'
+                          ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary-strong)]'
+                          : 'bg-[var(--color-warn-soft)] text-[var(--color-warn)]'
+                      }`}
+                    >
+                      {c.type === 'income' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
+                      {c.type === 'income' ? t('categories.income') : t('categories.expense')}
+                    </span>
+                    
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openEdit(c)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)]"
+                        aria-label={t('categories.edit')}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => setDeleting(c)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition hover:bg-[var(--color-warn-soft)] hover:text-[var(--color-warn)]"
+                        aria-label={t('categories.delete')}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-3">
                     <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-2xs"
                       style={{ backgroundColor: `${c.color}20`, color: c.color }}
                     >
-                      {Icon ? <Icon size={17} /> : null}
+                      {Icon ? <Icon size={18} /> : null}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-[var(--color-ink)]">{c.name}</p>
+                      <p className="truncate text-sm font-bold text-[var(--color-ink)]">{c.name}</p>
                       {hasLimit ? (
                         <p className={`truncate text-xs ${overLimit ? 'font-medium text-[var(--color-warn)]' : 'text-[var(--color-muted)]'}`}>
-                          {formatMoney(toDisplay(spent), currency, { compact: true })} / {formatMoney(toDisplay(c.monthlyLimit ?? 0), currency, { compact: true })} {t('categories.thisMonth')}
+                          {formatMoney(toDisplay(totalAmount), currency, { compact: true })} / {formatMoney(toDisplay(c.monthlyLimit ?? 0), currency, { compact: true })}
                         </p>
                       ) : (
-                        <p className="truncate text-xs text-[var(--color-muted)]">
-                          {tab === 'expense' ? t('categories.noLimit') : t('categories.incomeCategory')}
+                        <p className="truncate text-xs font-semibold text-[var(--color-ink-soft)]">
+                          {totalAmount > 0 
+                            ? `Total ${tab === 'income' ? 'Masuk' : 'Keluar'}: ${formatMoney(toDisplay(totalAmount), currency, { compact: true })}`
+                            : (tab === 'expense' ? t('categories.noLimit') : t('categories.incomeCategory'))}
                         </p>
                       )}
                     </div>
-                    <button
-                      onClick={() => openEdit(c)}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--color-muted)] transition hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)]"
-                      aria-label={t('categories.edit')}
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => setDeleting(c)}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--color-muted)] transition hover:bg-[var(--color-warn-soft)] hover:text-[var(--color-warn)]"
-                      aria-label={t('categories.delete')}
-                    >
-                      <Trash2 size={14} />
-                    </button>
                   </div>
 
                   {hasLimit && (
-                    <div className="mt-2.5 pl-[52px]">
+                    <div className="mt-2.5">
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
                         <div
                           className="h-full rounded-full transition-all"

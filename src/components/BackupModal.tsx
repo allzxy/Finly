@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
 import Modal from './Modal';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { Download, Upload, AlertTriangle, CheckCircle2, RefreshCw, FileSpreadsheet } from 'lucide-react';
 
 export default function BackupModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { exportExcelBuffer, importExcelBuffer, importData, resetAllData } = useFinance();
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -18,16 +20,16 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      const filename = `cakumu-backup-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const filename = `finly-backup-${new Date().toISOString().slice(0, 10)}.xlsx`;
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      showToast('Cadangan data Excel (.xlsx) berhasil diunduh!', 'success');
+      showToast(t('backup.exportSuccess'), 'success');
     } catch {
-      showToast('Gagal mengunduh cadangan data Excel', 'error');
+      showToast(t('backup.exportError'), 'error');
     }
   };
 
@@ -44,13 +46,13 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
           const buffer = event.target?.result as ArrayBuffer;
           const success = importExcelBuffer(buffer);
           if (success) {
-            showToast('Data keuangan berhasil dipulihkan dari file Excel (.xlsx)!', 'success');
+            showToast(t('backup.importSuccessExcel'), 'success');
             onClose();
           } else {
-            showToast('Format file Excel cadangan tidak valid!', 'error');
+            showToast(t('backup.importErrorExcel'), 'error');
           }
         } catch {
-          showToast('Gagal membaca file Excel cadangan', 'error');
+          showToast(t('backup.importReadErrorExcel'), 'error');
         }
       };
       reader.readAsArrayBuffer(file);
@@ -62,13 +64,13 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
           const content = event.target?.result as string;
           const success = importData(content);
           if (success) {
-            showToast('Data keuangan berhasil dipulihkan dari cadangan JSON!', 'success');
+            showToast(t('backup.importSuccessJson'), 'success');
             onClose();
           } else {
-            showToast('Format file cadangan tidak valid!', 'error');
+            showToast(t('backup.importErrorJson'), 'error');
           }
         } catch {
-          showToast('Gagal membaca file cadangan', 'error');
+          showToast(t('backup.importReadErrorJson'), 'error');
         }
       };
       reader.readAsText(file);
@@ -83,13 +85,13 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
       return;
     }
     resetAllData();
-    showToast('Seluruh data berhasil direset ke awal', 'info');
+    showToast(t('backup.resetSuccess'), 'info');
     setConfirmReset(false);
     onClose();
   };
 
   return (
-    <Modal open={open} onClose={() => { setConfirmReset(false); onClose(); }} title="Cadangkan & Pulihkan Data Excel">
+    <Modal open={open} onClose={() => { setConfirmReset(false); onClose(); }} title={t('backup.title')}>
       <div className="flex flex-col gap-6">
         {/* Banner Info */}
         <div className="flex items-start gap-3 rounded-2xl bg-[var(--color-surface-alt)] p-4">
@@ -97,9 +99,9 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
             <FileSpreadsheet size={18} />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-[var(--color-ink)]">Cadangan Format Excel (.xlsx)</h4>
+            <h4 className="text-xs font-bold text-[var(--color-ink)]">{t('backup.formatTitle')}</h4>
             <p className="mt-1 text-xs text-[var(--color-ink-soft)] leading-relaxed">
-              Seluruh transaksi, dompet, dan tabungan Anda dapat diekspor & diimpor secara langsung dalam format **Microsoft Excel (.xlsx)** yang rapi dan dapat dibuka di HP / PC.
+              {t('backup.formatDesc')}
             </p>
           </div>
         </div>
@@ -117,8 +119,8 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
                 <Download size={18} />
               </div>
               <div>
-                <span className="block text-xs font-bold text-[var(--color-ink)]">Cadangkan Data (Export Excel .xlsx)</span>
-                <span className="block text-[11px] text-[var(--color-muted)]">Simpan seluruh data ke file Excel .xlsx</span>
+                <span className="block text-xs font-bold text-[var(--color-ink)]">{t('backup.exportTitle')}</span>
+                <span className="block text-[11px] text-[var(--color-muted)]">{t('backup.exportDesc')}</span>
               </div>
             </div>
             <CheckCircle2 size={16} className="text-[var(--color-primary)]" />
@@ -135,8 +137,8 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
                 <Upload size={18} />
               </div>
               <div>
-                <span className="block text-xs font-bold text-[var(--color-ink)]">Pulihkan Data (Import Excel .xlsx)</span>
-                <span className="block text-[11px] text-[var(--color-muted)]">Unggah file .xlsx / .json cadangan dari perangkat</span>
+                <span className="block text-xs font-bold text-[var(--color-ink)]">{t('backup.importTitle')}</span>
+                <span className="block text-[11px] text-[var(--color-muted)]">{t('backup.importDesc')}</span>
               </div>
             </div>
             <Upload size={16} className="text-[var(--color-accent)]" />
@@ -157,9 +159,9 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
             <div className="flex items-start gap-3">
               <AlertTriangle size={18} className="shrink-0 text-[var(--color-warn)] mt-0.5" />
               <div className="flex-1">
-                <h5 className="text-xs font-bold text-[var(--color-warn)]">Reset Seluruh Data</h5>
+                <h5 className="text-xs font-bold text-[var(--color-warn)]">{t('backup.resetTitle')}</h5>
                 <p className="mt-1 text-[11px] text-[var(--color-ink-soft)] leading-relaxed">
-                  Menghapus seluruh catatan dompet, transaksi, dan tabungan untuk memulai dari awal.
+                  {t('backup.resetDesc')}
                 </p>
 
                 <button
@@ -172,7 +174,7 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
                   }`}
                 >
                   <RefreshCw size={13} className={confirmReset ? 'animate-spin' : ''} />
-                  <span>{confirmReset ? 'Klik Sekali Lagi untuk Konfirmasi Reset!' : 'Reset Data Keuangan'}</span>
+                  <span>{confirmReset ? t('backup.resetConfirmBtn') : t('backup.resetBtn')}</span>
                 </button>
               </div>
             </div>

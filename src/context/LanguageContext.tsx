@@ -1,12 +1,12 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { translate, LANGUAGE_LABELS, type Language, type TranslationKey } from '../lib/i18n';
 
-const STORAGE_KEY = 'cakumu-language';
+const STORAGE_KEY = 'finly-language';
 
 function loadInitial(): Language {
   if (typeof window === 'undefined') return 'id';
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = window.localStorage.getItem(STORAGE_KEY) || window.localStorage.getItem('cakumu-language');
     if (stored === 'id' || stored === 'en') return stored;
   } catch {
     // ignore

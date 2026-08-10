@@ -1,6 +1,7 @@
 import Modal from './Modal';
 import { useLanguage } from '../context/LanguageContext';
-import { Leaf, Sparkles, ShieldCheck, Heart, Tag } from 'lucide-react';
+import PocketIcon from './PocketIcon';
+import { Sparkles, ShieldCheck, Heart, Tag } from 'lucide-react';
 
 const APP_VERSION = '1.0.0';
 
@@ -19,8 +20,8 @@ export default function AboutModal({ open, onClose }: { open: boolean; onClose: 
     <Modal open={open} onClose={onClose} title={t('about.modalTitle')}>
       <div className="flex flex-col gap-5">
         <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-accent-soft)] px-4 py-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-[var(--color-primary-contrast)] shadow-sm">
-            <Leaf size={22} strokeWidth={2.2} />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl overflow-hidden shadow-sm">
+            <PocketIcon size={48} />
           </div>
           <div className="min-w-0">
             <p className="font-bold tracking-tight text-lg leading-none text-[var(--color-ink)]">{t('about.appName')}</p>

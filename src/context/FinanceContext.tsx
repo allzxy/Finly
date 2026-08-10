@@ -42,37 +42,85 @@ interface FinanceContextValue extends FinanceState {
   resetAllData: () => void;
 }
 
-const STORAGE_KEY = 'cakumu-data-empty-v1';
+const STORAGE_KEY = 'finly-data-v1';
+const STORAGE_KEYS = [
+  'finly-data-v1',
+  'cakumu-data-empty-v1',
+  'cakumu-data-v1',
+  'cakumu-data',
+  'cakumu_data',
+  'cakumu_storage',
+  'cakumu-storage',
+];
+
+function sanitizeCategories(categories: Category[]): Category[] {
+  let list = Array.isArray(categories) && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+  const existingIds = new Set(list.map((c) => c && c.id));
+  const missingDefaults = DEFAULT_CATEGORIES.filter((c) => !existingIds.has(c.id));
+  if (missingDefaults.length > 0) {
+    list = [...missingDefaults, ...list];
+  }
+  return list;
+}
+
+function sanitizeTransactions(transactions: Transaction[], categories: Category[]): Transaction[] {
+  if (!Array.isArray(transactions)) return [];
+  const validCatIds = new Set(categories.map((c) => c && c.id));
+  const fallbackExpenseCat = categories.find((c) => c && c.type === 'expense' && !c.system)?.id ?? 'c-shopping';
+  const fallbackIncomeCat = categories.find((c) => c && c.type === 'income' && !c.system)?.id ?? 'c-salary';
+
+  return transactions.map((tr) => {
+    if (!tr || typeof tr !== 'object') return tr;
+
+    let catId = tr.categoryId;
+    if (tr.type === 'expense' && catId === 'c-topup-in' && !tr.linkedWalletId) {
+      catId = fallbackExpenseCat;
+    }
+    if (catId && !validCatIds.has(catId)) {
+      catId = tr.type === 'income' ? fallbackIncomeCat : fallbackExpenseCat;
+    }
+    return { ...tr, categoryId: catId };
+  });
+}
+
+function reconcileWalletBalances(wallets: Wallet[]): Wallet[] {
+  if (!Array.isArray(wallets)) return [];
+  return wallets.map((w) => {
+    if (!w || typeof w !== 'object') return w;
+    const isNaNBal = typeof w.balance !== 'number' || isNaN(w.balance);
+    return {
+      ...w,
+      balance: isNaNBal ? 0 : w.balance,
+      goalAmount: typeof w.goalAmount === 'number' ? w.goalAmount : undefined,
+    };
+  });
+}
 
 function loadInitial(): FinanceState {
   const initialCategories = DEFAULT_CATEGORIES;
 
   if (typeof window !== 'undefined') {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      let raw: string | null = null;
+      for (const key of STORAGE_KEYS) {
+        const item = window.localStorage.getItem(key);
+        if (item) {
+          raw = item;
+          break;
+        }
+      }
+
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
-          let categories: Category[] = Array.isArray(parsed.categories) ? parsed.categories : initialCategories;
-          
-          // Memulihkan kategori standar jika data lokal sebelumnya hanya berisi kategori sistem
-          const hasNonSystem = categories.some((c) => c && !c.system);
-          if (!hasNonSystem) {
-            const nonSystemDefaults = DEFAULT_CATEGORIES.filter((c) => !c.system);
-            categories = [...nonSystemDefaults, ...categories];
-          }
+          const rawCategories: Category[] = Array.isArray(parsed.categories) ? parsed.categories : initialCategories;
+          const categories = sanitizeCategories(rawCategories);
 
-          // Membersihkan transaksi pengeluaran yang secara tidak sengaja ter-assign ke kategori 'c-topup-in' (Isi Saldo)
-          const fallbackExpenseCat = categories.find((c) => c && c.type === 'expense' && !c.system)?.id ?? 'c-shopping';
           const rawTx = Array.isArray(parsed.transactions) ? parsed.transactions : [];
-          const transactions: Transaction[] = rawTx.map((tr: Transaction) => {
-            if (tr && tr.type === 'expense' && tr.categoryId === 'c-topup-in' && !tr.linkedWalletId) {
-              return { ...tr, categoryId: fallbackExpenseCat };
-            }
-            return tr;
-          });
+          const transactions = sanitizeTransactions(rawTx, categories);
 
-          const wallets = Array.isArray(parsed.wallets) ? parsed.wallets : [];
+          const rawWallets = Array.isArray(parsed.wallets) ? parsed.wallets : [];
+          const wallets = reconcileWalletBalances(rawWallets);
 
           return {
             wallets,
@@ -127,6 +175,17 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       /* ignore quota errors */
     }
   }, [state.wallets, state.categories, state.transactions, state.currencyCode, state.selectedMonth]);
+
+  // Listen for storage changes across browser tabs / PWA windows on the device
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && STORAGE_KEYS.includes(e.key)) {
+        setState(loadInitial());
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const liveRates = useLiveRates();
 
@@ -400,10 +459,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
+      const categories = sanitizeCategories(parsed.categories);
+      const transactions = sanitizeTransactions(parsed.transactions, categories);
+
       setState({
         wallets: parsed.wallets,
-        categories: parsed.categories.length > 0 ? parsed.categories : DEFAULT_CATEGORIES,
-        transactions: parsed.transactions,
+        categories,
+        transactions,
         currencyCode: typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR',
         selectedMonth: currentMonthKey(),
       });
@@ -426,10 +488,13 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     const data = importFromExcelBuffer(buffer);
     if (!data) return false;
 
+    const categories = sanitizeCategories(data.categories);
+    const transactions = sanitizeTransactions(data.transactions, categories);
+
     setState({
       wallets: data.wallets,
-      categories: data.categories.length > 0 ? data.categories : DEFAULT_CATEGORIES,
-      transactions: data.transactions,
+      categories,
+      transactions,
       currencyCode: data.currencyCode || 'IDR',
       selectedMonth: currentMonthKey(),
     });

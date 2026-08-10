@@ -19,21 +19,27 @@ export default function Settings() {
   const [showGuide, setShowGuide] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
 
+  const isEn = language === 'en';
+
   return (
     <div className="flex flex-col gap-6">
       <Topbar title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* 1. Panduan & Cara Penggunaan (BARU) */}
+        {/* 1. Panduan & Cara Penggunaan */}
         <div className="rounded-2xl border border-[var(--color-primary)]/40 bg-[var(--color-primary-soft)]/20 p-5 shadow-[var(--shadow-flat)] transition hover:border-[var(--color-primary)]">
           <div className="mb-3 flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary-strong)]">
               <BookOpen size={16} />
             </div>
-            <h3 className="text-sm font-bold text-[var(--color-ink)]">Panduan & Cara Penggunaan</h3>
+            <h3 className="text-sm font-bold text-[var(--color-ink)]">
+              {isEn ? 'User Guide & Tutorial' : 'Panduan & Cara Penggunaan'}
+            </h3>
           </div>
           <p className="mb-3.5 text-xs text-[var(--color-ink-soft)] leading-relaxed">
-            Pelajari fungsi lengkap dari setiap fitur Cakumu (Dasbor, Dompet, Tabungan, Transaksi, Kurs, dll).
+            {isEn
+              ? 'Learn all functions and features of Finly (Dashboard, Wallets, Savings, Transactions, Exchange Rates, etc).'
+              : 'Pelajari fungsi lengkap dari setiap fitur Finly (Dasbor, Dompet, Tabungan, Transaksi, Kurs, dll).'}
           </p>
           <button
             onClick={() => setShowGuide(true)}
@@ -41,23 +47,21 @@ export default function Settings() {
           >
             <span className="flex items-center gap-2">
               <BookOpen size={14} />
-              <span>Buka Panduan Penggunaan</span>
+              <span>{isEn ? 'Open User Guide' : 'Buka Panduan Penggunaan'}</span>
             </span>
             <ChevronRight size={16} />
           </button>
         </div>
 
-        {/* 2. Cadangan & Pulihkan Data (BARU) */}
+        {/* 2. Cadangan & Pulihkan Data */}
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-flat)]">
           <div className="mb-3 flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
               <Database size={16} />
             </div>
-            <h3 className="text-sm font-semibold text-[var(--color-ink)]">Cadangkan & Pulihkan Data</h3>
+            <h3 className="text-sm font-semibold text-[var(--color-ink)]">{t('settings.backup.title')}</h3>
           </div>
-          <p className="mb-3 text-xs text-[var(--color-ink-soft)]">
-            Ekspor riwayat keuangan Anda ke file Excel (.xlsx) atau impor cadangan data dari perangkat lain.
-          </p>
+          <p className="mb-3 text-xs text-[var(--color-ink-soft)]">{t('settings.backup.desc')}</p>
           <button
             onClick={() => setShowBackup(true)}
             className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-left transition hover:border-[var(--color-accent)]/40"
@@ -66,8 +70,8 @@ export default function Settings() {
               <Database size={17} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-[var(--color-ink)]">Backup & Restore Excel (.xlsx)</span>
-              <span className="block truncate text-xs text-[var(--color-muted)]">Amankan & pindahkan data via Excel</span>
+              <span className="block text-sm font-semibold text-[var(--color-ink)]">{t('backup.title')}</span>
+              <span className="block truncate text-xs text-[var(--color-muted)]">{t('backup.exportDesc')}</span>
             </span>
             <ChevronRight size={16} className="shrink-0 text-[var(--color-muted)]" />
           </button>

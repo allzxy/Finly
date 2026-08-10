@@ -92,11 +92,11 @@ export default function Dashboard() {
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-flat)]">
           <div className="mb-2 flex items-center justify-between text-xs font-semibold">
             <span className="flex items-center gap-1.5 text-[var(--color-ink)]">
-              <span>📊 Nisbah Pengeluaran Bulan Ini</span>
-              <span className="text-[11px] text-[var(--color-muted)] font-normal">({Math.round((spending / income) * 100)}% terpakai)</span>
+              <span>📊 {t('dashboard.spendingRatio')}</span>
+              <span className="text-[11px] text-[var(--color-muted)] font-normal">({t('dashboard.usedPct', { pct: Math.round((spending / income) * 100) })})</span>
             </span>
             <span className={spending / income > 0.85 ? 'text-[var(--color-warn)] font-bold' : spending / income > 0.6 ? 'text-[var(--color-accent)] font-semibold' : 'text-[var(--color-primary-strong)] font-semibold'}>
-              {spending / income > 0.85 ? 'Waspada Hemat' : spending / income > 0.6 ? 'Pengeluaran Wajar' : 'Kondisi Sehat'}
+              {spending / income > 0.85 ? t('dashboard.statusCaution') : spending / income > 0.6 ? t('dashboard.statusNormal') : t('dashboard.statusHealthy')}
             </span>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">

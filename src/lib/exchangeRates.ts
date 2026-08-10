@@ -5,7 +5,7 @@
 import { EXCHANGE_RATES, BASE_CURRENCY_CODE } from './currencies';
 
 // Kita ubah nama cache agar sistem otomatis mereset data lama pengguna
-const CACHE_KEY = 'cakumu-exchange-rates-v2';
+const CACHE_KEY = 'finly-exchange-rates-v2';
 const CACHE_TTL_MS = 60 * 60 * 1000; // Cek pembaruan setiap 1 jam
 
 export interface RatesSnapshot {

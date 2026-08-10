@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   private handleReset = () => {
     try {
-      localStorage.removeItem('cakumu-data-empty-v1');
+      localStorage.removeItem('finly-data-v1');
     } catch {
       /* ignore */
     }

@@ -2,18 +2,55 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="description" content="Cakumu — Catat Keuangan Mu, aplikasi pelacak keuangan pribadi yang ringan dan cepat dimuat di HP." />
+    
+    <!-- Primary Meta Tags -->
+    <title>Finly — Sahabat Keuangan Pribadimu</title>
+    <meta name="title" content="Finly — Sahabat Keuangan Pribadimu" />
+    <meta name="description" content="Aplikasi pencatat keuangan pribadi yang ringan, cepat, dan aman. Catat pemasukan, pengeluaran, dompet, dan target tabungan secara offline maupun online." />
+    <meta name="keywords" content="finly, pencatat keuangan, kelola uang, dompet digital, tabungan, pengeluaran harian, personal finance, budget tracker" />
+    <meta name="author" content="Finly Team" />
+    <meta name="theme-color" content="#1f7a5c" />
+    <meta name="application-name" content="Finly" />
+    <meta name="apple-mobile-web-app-title" content="Finly" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Open Graph / Facebook / WhatsApp / Telegram / Line / iMessage -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://finly.app/" />
+    <meta property="og:title" content="Finly — Sahabat Keuangan Pribadimu" />
+    <meta property="og:description" content="Kelola finansial Anda dengan mudah & cerdas. Catat pemasukan, pengeluaran, dompet, dan target tabungan dengan tampilan simpel, modern, dan cepat." />
+    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Finly — Sahabat Keuangan Pribadimu App Preview" />
+    <meta property="og:site_name" content="Finly" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://finly.app/" />
+    <meta name="twitter:title" content="Finly — Sahabat Keuangan Pribadimu" />
+    <meta name="twitter:description" content="Aplikasi pencatat keuangan pribadi yang ringan, cepat, dan aman. Kelola finansial Anda dengan mudah & cerdas." />
+    <meta name="twitter:image" content="/og-image.jpg" />
+
+    <!-- Favicon & PWA Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <title>Cakumu — Catat Keuangan Mu</title>
+
     <script>
       (function () {
         try {
-          var stored = localStorage.getItem('cakumu-theme');
+          var stored = localStorage.getItem('finly-theme');
           var isDark =
             stored === 'dark' ||
             (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
