@@ -25,7 +25,7 @@ export default function Settings() {
     <div className="flex flex-col gap-6">
       <Topbar title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {/* 1. Panduan & Cara Penggunaan */}
         <div className="rounded-2xl border border-[var(--color-primary)]/40 bg-[var(--color-primary-soft)]/20 p-5 shadow-[var(--shadow-flat)] transition hover:border-[var(--color-primary)]">
           <div className="mb-3 flex items-center gap-2">

@@ -154,7 +154,7 @@ export default function DailyChart({ transactions, month, selectedDate, onSelect
   }, [points]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-flat)]">
+    <div className="flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-flat)]">
       <div className="p-4 sm:p-5">
         <div className="mb-3 flex items-center gap-2 sm:mb-4">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] text-[var(--color-primary-contrast)]">

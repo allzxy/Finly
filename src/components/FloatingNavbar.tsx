@@ -68,10 +68,10 @@ export default function FloatingNavbar() {
       />
 
       {/* 1. DESKTOP & TABLET FLOATING NAVBAR (Top Floating Pill Bar) */}
-      <header className="glass-pill fixed top-4 left-1/2 z-40 hidden -translate-x-1/2 md:flex items-center justify-between gap-4 w-[calc(100%-2.5rem)] max-w-[960px] rounded-full border border-[var(--color-border)]/80 px-4 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] transition-all duration-300">
+      <header className="glass-pill fixed top-4 left-1/2 z-40 hidden -translate-x-1/2 md:flex items-center justify-between gap-4 w-[calc(100%-2rem)] rounded-full border border-[var(--color-border)]/80 px-4 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] transition-all duration-300">
         {/* Brand Logo */}
         <NavLink to="/" className="flex items-center gap-2.5 shrink-0 pl-1 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shadow-xs transition transform group-hover:scale-105">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shadow-sm transition transform group-hover:scale-105">
             <PocketIcon size={36} />
           </div>
           <span className="font-bold tracking-tight text-lg text-[var(--color-ink)]">Finly</span>
@@ -96,6 +96,43 @@ export default function FloatingNavbar() {
               <span>{item.label}</span>
             </NavLink>
           ))}
+
+          {/* Desktop "Lainnya" Dropdown */}
+          <div ref={moreMenuRefDesktop} className="relative">
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                isMoreActive || moreOpen
+                  ? 'bg-[var(--color-primary)] text-[var(--color-primary-contrast)] shadow-sm scale-102'
+                  : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-glass)] hover:text-[var(--color-ink)]'
+              }`}
+            >
+              <MoreHorizontal size={15} />
+              <span>{t('nav.menu')}</span>
+            </button>
+
+            {moreOpen && (
+              <div className="glass-panel animate-rise absolute top-12 right-0 z-50 w-48 overflow-hidden rounded-2xl border border-[var(--color-border)]/80 p-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
+                {MORE_NAV_ITEMS.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMoreOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium transition ${
+                        isActive
+                          ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary-strong)] font-semibold'
+                          : 'text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-ink)]'
+                      }`
+                    }
+                  >
+                    <item.icon size={16} strokeWidth={2} />
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Right Actions: Standalone Floating Plus Button & Theme Toggle */}
@@ -115,7 +152,7 @@ export default function FloatingNavbar() {
       {/* 2. MOBILE FLOATING TOP HEADER */}
       <header className="glass-panel fixed top-3 left-1/2 z-40 flex md:hidden items-center justify-between gap-2 w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl border border-[var(--color-border)]/80 px-3.5 py-2 shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
         <NavLink to="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden shadow-xs">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden shadow-sm">
             <PocketIcon size={32} />
           </div>
           <span className="font-bold tracking-tight text-base text-[var(--color-ink)]">Finly</span>

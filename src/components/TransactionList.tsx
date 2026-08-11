@@ -108,18 +108,20 @@ export default function TransactionList({ transactions, preview = false }: Props
                   </p>
                 </div>
                 <p className={`shrink-0 text-right text-[13px] font-semibold sm:text-sm ${tx.type === 'income' ? 'text-[var(--color-primary)]' : 'text-[var(--color-ink)]'}`}>{tx.type === 'income' ? '+' : '−'}{formatMoney(toDisplay(tx.amount), currency)}</p>
-                <div className="relative shrink-0">
-                  <button onClick={() => setMenuOpenId(menuOpenId === tx.id ? null : tx.id)} className={`flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-ink)] ${menuOpenId === tx.id ? 'bg-[var(--color-surface-alt)] text-[var(--color-ink)]' : 'sm:opacity-0 sm:group-hover:opacity-100'}`} aria-label={t('tx.menu')}><MoreVertical size={15} /></button>
-                  {menuOpenId === tx.id && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
-                      <div className="absolute right-0 top-8 z-20 w-36 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-flat)]">
-                        <button onClick={() => { setEditingTx(tx); setMenuOpenId(null); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-[var(--color-ink-soft)] transition hover:bg-[var(--color-surface-alt)]"><Pencil size={13} /> {t('common.edit')}</button>
-                        <button onClick={() => { deleteTransaction(tx.id); setMenuOpenId(null); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-[var(--color-warn)] transition hover:bg-[var(--color-warn-soft)]"><Trash2 size={13} /> {t('common.delete')}</button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                {!preview && (
+                  <div className="relative shrink-0">
+                    <button onClick={() => setMenuOpenId(menuOpenId === tx.id ? null : tx.id)} className={`flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted)] transition hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-ink)] ${menuOpenId === tx.id ? 'bg-[var(--color-surface-alt)] text-[var(--color-ink)]' : 'sm:opacity-0 sm:group-hover:opacity-100'}`} aria-label={t('tx.menu')}><MoreVertical size={15} /></button>
+                    {menuOpenId === tx.id && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
+                        <div className="absolute right-0 top-8 z-20 w-36 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-flat)]">
+                          <button onClick={() => { setEditingTx(tx); setMenuOpenId(null); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-[var(--color-ink-soft)] transition hover:bg-[var(--color-surface-alt)]"><Pencil size={13} /> {t('common.edit')}</button>
+                          <button onClick={() => { deleteTransaction(tx.id); setMenuOpenId(null); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-[var(--color-warn)] transition hover:bg-[var(--color-warn-soft)]"><Trash2 size={13} /> {t('common.delete')}</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

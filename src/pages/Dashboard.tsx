@@ -87,36 +87,10 @@ export default function Dashboard() {
         scopeLabel={selectedDate ? t('summary.scopeDate', { day: selectedDate.slice(8, 10) }) : t('summary.scopeMonth')} 
       />
 
-      {/* Indikator Kesehatan Pengeluaran vs Pemasukan Bulanan (Budget Health) */}
-      {income > 0 && (
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-flat)]">
-          <div className="mb-2 flex items-center justify-between text-xs font-semibold">
-            <span className="flex items-center gap-1.5 text-[var(--color-ink)]">
-              <span>📊 {t('dashboard.spendingRatio')}</span>
-              <span className="text-[11px] text-[var(--color-muted)] font-normal">({t('dashboard.usedPct', { pct: Math.round((spending / income) * 100) })})</span>
-            </span>
-            <span className={spending / income > 0.85 ? 'text-[var(--color-warn)] font-bold' : spending / income > 0.6 ? 'text-[var(--color-accent)] font-semibold' : 'text-[var(--color-primary-strong)] font-semibold'}>
-              {spending / income > 0.85 ? t('dashboard.statusCaution') : spending / income > 0.6 ? t('dashboard.statusNormal') : t('dashboard.statusHealthy')}
-            </span>
-          </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
-            <div
-              className={`h-full transition-all duration-500 rounded-full ${
-                spending / income > 0.85
-                  ? 'bg-[var(--color-warn)]'
-                  : spending / income > 0.6
-                  ? 'bg-[var(--color-accent)]'
-                  : 'bg-[var(--color-primary)]'
-              }`}
-              style={{ width: `${Math.min(100, Math.round((spending / income) * 100))}%` }}
-            />
-          </div>
-        </div>
-      )}
-      
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
-        <div className="xl:col-span-3"><DailyChart transactions={monthTx} month={selectedMonth} selectedDate={selectedDate} onSelectDate={setSelectedDate} /></div>
-        <div className="xl:col-span-2"><CategoryBreakdown transactions={scopedTx} categories={categories} onManage={() => navigate('/categories')} /></div>
+
+      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
+        <div className="flex flex-col lg:col-span-7"><DailyChart transactions={monthTx} month={selectedMonth} selectedDate={selectedDate} onSelectDate={setSelectedDate} /></div>
+        <div className="flex flex-col lg:col-span-5"><CategoryBreakdown transactions={scopedTx} categories={categories} onManage={() => navigate('/categories')} /></div>
       </div>
       
       {/* TransactionList menerima recentTx untuk menampilkan riwayat transaksi terbaru */}

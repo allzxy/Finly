@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { formatMoney } from '../lib/currencies';
 import { CATEGORY_ICONS } from '../lib/icons';
 import CategoryDonut from './CategoryDonut';
-import { PieChart as PieIcon, ChevronRight, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { PieChart as PieIcon, ChevronRight, ArrowUpRight, ArrowDownLeft, PiggyBank } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
@@ -16,16 +16,24 @@ interface Props {
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 export default function CategoryBreakdown({ transactions, categories, onManage }: Props) {
-  const { currency, toDisplay } = useFinance();
+  const { currency, wallets, toDisplay } = useFinance();
   const { t } = useLanguage();
 
-  const { data, totalExpense, totalIncome } = useMemo(() => {
+  const { data, totalExpense, totalIncome, totalSavings } = useMemo(() => {
     const expenseTotals = new Map<string, number>();
     const incomeTotals = new Map<string, number>();
+    const savingsTotals = new Map<string, number>();
 
     transactions.forEach((tx) => {
-      if (tx.linkedWalletId) return; // skip internal wallet transfers/topups
-      if (tx.type === 'expense') {
+      // Skip internal transfers between two real wallets
+      if (tx.type === 'expense' && tx.linkedWalletId) return;
+
+      const wallet = wallets.find((w) => w.id === tx.walletId);
+      const isSavings = !!tx.linkedWalletId || wallet?.type === 'savings';
+
+      if (isSavings) {
+        savingsTotals.set(tx.categoryId, (savingsTotals.get(tx.categoryId) ?? 0) + tx.amount);
+      } else if (tx.type === 'expense') {
         expenseTotals.set(tx.categoryId, (expenseTotals.get(tx.categoryId) ?? 0) + tx.amount);
       } else if (tx.type === 'income') {
         incomeTotals.set(tx.categoryId, (incomeTotals.get(tx.categoryId) ?? 0) + tx.amount);
@@ -34,6 +42,7 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
 
     let sumExp = 0;
     let sumInc = 0;
+    let sumSav = 0;
 
     const expenseList = Array.from(expenseTotals.entries()).map(([categoryId, value]) => {
       sumExp += value;
@@ -63,18 +72,33 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
       };
     });
 
-    // Combine both and sort by highest value
-    const combined = [...expenseList, ...incomeList].sort((a, b) => b.value - a.value);
+    const savingsList = Array.from(savingsTotals.entries()).map(([categoryId, value]) => {
+      sumSav += value;
+      const cat = categories.find((c) => c.id === categoryId);
+      return {
+        categoryId,
+        type: 'savings' as const,
+        name: cat && !cat.system && categoryId ? cat.name : t('nav.savings'),
+        value,
+        color: cat?.color ?? 'var(--color-accent)',
+        icon: cat?.icon ?? 'PiggyBank',
+        limit: undefined,
+      };
+    });
 
-    return { data: combined, totalExpense: sumExp, totalIncome: sumInc };
-  }, [transactions, categories, t]);
+    // Combine all and sort by highest value
+    const combined = [...expenseList, ...incomeList, ...savingsList].sort((a, b) => b.value - a.value);
 
-  const grandTotal = totalExpense + totalIncome;
+    return { data: combined, totalExpense: sumExp, totalIncome: sumInc, totalSavings: sumSav };
+  }, [transactions, categories, wallets, t]);
+
+  const grandTotal = totalExpense + totalIncome + totalSavings;
   const topExpense = data.find((d) => d.type === 'expense');
   const topIncome = data.find((d) => d.type === 'income');
+  const topSavings = data.find((d) => d.type === 'savings');
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-flat)] sm:p-5">
+    <div className="flex h-full flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-flat)] sm:p-5">
       <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
@@ -103,10 +127,10 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
               segments={data.map((d) => ({
                 id: `${d.type}-${d.categoryId}`,
                 value: d.value,
-                color: d.type === 'income' ? 'var(--color-primary)' : d.color,
+                color: d.type === 'income' ? 'var(--color-primary)' : d.type === 'savings' ? 'var(--color-accent)' : d.color,
               }))}
               centerLabel={totalExpense > 0 ? t('categories.expense') : t('categories.totalInLabel')}
-              centerValue={formatMoney(toDisplay(totalExpense > 0 ? totalExpense : totalIncome), currency, { compact: true })}
+              centerValue={formatMoney(toDisplay(totalExpense > 0 ? totalExpense : totalIncome + totalSavings), currency, { compact: true })}
             />
 
             <div className="flex flex-1 flex-col gap-2 w-full">
@@ -126,6 +150,14 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
                   </p>
                 </div>
               )}
+              {topSavings && (
+                <div className="flex min-w-0 items-center gap-2.5 rounded-xl bg-[var(--color-accent-soft)]/60 px-3 py-2 text-xs">
+                  <PiggyBank size={16} className="shrink-0 text-[var(--color-accent)]" />
+                  <p className="min-w-0 truncate text-[var(--color-ink-soft)]">
+                    {t('categories.topSavingsLabel', { name: topSavings.name })} ({formatMoney(toDisplay(topSavings.value), currency, { compact: true })})
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -139,7 +171,17 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
                 ? (entry.value / grandTotal) * 100
                 : 0;
               const overLimit = hasLimit && entry.value > (entry.limit ?? 0);
-              const barColor = entry.type === 'income' ? 'var(--color-primary)' : overLimit ? 'var(--color-warn)' : entry.color;
+              const barColor = entry.type === 'income' ? 'var(--color-primary)' : entry.type === 'savings' ? 'var(--color-accent)' : overLimit ? 'var(--color-warn)' : entry.color;
+              const badgeStyle = entry.type === 'income'
+                ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary-strong)]'
+                : entry.type === 'savings'
+                ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                : 'bg-[var(--color-warn-soft)] text-[var(--color-warn)]';
+              const badgeLabel = entry.type === 'income'
+                ? t('categories.tagIn')
+                : entry.type === 'savings'
+                ? t('categories.tagSavings')
+                : t('categories.tagOut');
 
               return (
                 <div key={`${entry.type}-${entry.categoryId}`} className="flex items-center gap-3">
@@ -147,21 +189,15 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
                     className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
                     style={{ backgroundColor: `${barColor}1f`, color: barColor }}
                   >
-                    {Icon ? <Icon size={14} /> : null}
+                    {Icon ? <Icon size={14} /> : <PiggyBank size={14} />}
                     {i < 3 && <span className="absolute -bottom-1 -right-1 text-[11px] leading-none">{MEDALS[i]}</span>}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="truncate font-medium text-[var(--color-ink)]">{entry.name}</span>
-                        <span
-                          className={`inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                            entry.type === 'income'
-                              ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary-strong)]'
-                              : 'bg-[var(--color-warn-soft)] text-[var(--color-warn)]'
-                          }`}
-                        >
-                          {entry.type === 'income' ? t('categories.tagIn') : t('categories.tagOut')}
+                        <span className={`inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold ${badgeStyle}`}>
+                          {badgeLabel}
                         </span>
                       </div>
                       <span className={`ml-2 shrink-0 ${overLimit ? 'font-semibold text-[var(--color-warn)]' : 'text-[var(--color-muted)]'}`}>
