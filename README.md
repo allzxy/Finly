@@ -116,7 +116,7 @@ Finly/
 
 ## 📄 Lisensi
 
-Proyek ini dilisensikan di bawah **Lisensi MIT** — lihat file [LICENSE](file:///c:/Users/DKV%20SMK%20AL-HUDA/Documents/Cakumu/LICENSE) untuk rincian selengkapnya.
+Proyek ini dilisensikan di bawah **Lisensi MIT** — lihat file [LICENSE](LICENSE) untuk rincian selengkapnya.
 
 ---
 

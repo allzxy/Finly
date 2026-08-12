@@ -66,6 +66,8 @@ export default function DailyChart({ transactions, month, selectedDate, onSelect
     const count = daysInMonth(month);
     const byDay = Array.from({ length: count }, () => ({ income: 0, expense: 0 }));
     transactions.forEach((tx) => {
+      // Abaikan transaksi transfer internal agar tidak menggelembungkan statistik harian murni
+      if (tx.linkedWalletId || tx.categoryId === 'c-topup-in' || tx.categoryId === 'c-topup-out') return;
       const dayNum = parseInt(tx.date.slice(8, 10), 10);
       if (dayNum >= 1 && dayNum <= count) {
         if (tx.type === 'income') byDay[dayNum - 1].income += tx.amount;
@@ -117,20 +119,33 @@ export default function DailyChart({ transactions, month, selectedDate, onSelect
   }, [daily, month]);
 
   const insight = useMemo(() => {
+    const formattedIncome = formatMoney(toDisplay(stats.totalIncome), currency);
+    const formattedExpense = formatMoney(toDisplay(stats.totalExpense), currency);
+
     if (stats.totalIncome === 0 && stats.totalExpense === 0) {
       return { emoji: '👋', text: t('chart.insight.empty') };
+    }
+    if (stats.totalIncome === 0 && stats.totalExpense > 0) {
+      return { emoji: '💡', text: t('chart.insight.noIncome', { expense: formattedExpense }) };
+    }
+    if (stats.totalExpense === 0 && stats.totalIncome > 0) {
+      return { emoji: '🎉', text: t('chart.insight.noExpense', { income: formattedIncome }) };
     }
     if (stats.noSpendStreak >= 3) {
       return { emoji: '🔥', text: t('chart.insight.streak', { days: stats.noSpendStreak }) };
     }
+    if (stats.savingsRate !== null && stats.savingsRate >= 50) {
+      return { emoji: '🌟', text: t('chart.insight.excellent', { pct: stats.savingsRate.toFixed(0) }) };
+    }
     if (stats.savingsRate !== null && stats.savingsRate >= 20) {
-      return { emoji: '🌟', text: t('chart.insight.good', { pct: stats.savingsRate.toFixed(0) }) };
+      return { emoji: '👏', text: t('chart.insight.good', { pct: stats.savingsRate.toFixed(0) }) };
     }
-    if (stats.savingsRate !== null && stats.savingsRate < 0) {
-      return { emoji: '⚠️', text: t('chart.insight.bad') };
+    if (stats.savingsRate !== null && stats.savingsRate >= 0) {
+      const spendPct = (100 - stats.savingsRate).toFixed(0);
+      return { emoji: '📊', text: t('chart.insight.moderate', { pct: spendPct }) };
     }
-    return { emoji: '📈', text: t('chart.insight.neutral') };
-  }, [stats, t]);
+    return { emoji: '⚠️', text: t('chart.insight.bad') };
+  }, [stats, t, toDisplay, currency]);
 
   const chart = useMemo(() => {
     const n = points.length;

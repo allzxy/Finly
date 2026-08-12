@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Category, Transaction, Wallet } from '../lib/types';
-import { CURRENCIES, BASE_CURRENCY_CODE, convertAmount } from '../lib/currencies';
+import { CURRENCIES, BASE_CURRENCY_CODE, convertAmount, EXCHANGE_RATES } from '../lib/currencies';
 import { useLiveRates, type LiveRatesState } from '../lib/useLiveRates';
 import { useLanguage } from './LanguageContext';
 import { DEFAULT_CATEGORIES } from '../lib/seed';
@@ -192,13 +192,17 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const currency = useMemo(() => CURRENCIES.find((c) => c.code === state.currencyCode) ?? CURRENCIES[0], [state.currencyCode]);
 
   const toDisplay = useCallback(
-    (amount: number) => convertAmount(amount, BASE_CURRENCY_CODE, state.currencyCode, liveRates.rates),
+    (amount: number) => {
+      const useStaticScale = state.currencyCode === 'IDR' || state.currencyCode === BASE_CURRENCY_CODE;
+      const ratesToUse = useStaticScale ? EXCHANGE_RATES : liveRates.rates;
+      return convertAmount(amount, BASE_CURRENCY_CODE, state.currencyCode, ratesToUse);
+    },
     [state.currencyCode, liveRates.rates]
   );
 
   const fromDisplay = useCallback(
-    (amount: number) => convertAmount(amount, state.currencyCode, BASE_CURRENCY_CODE, liveRates.rates),
-    [state.currencyCode, liveRates.rates]
+    (amount: number) => convertAmount(amount, state.currencyCode, BASE_CURRENCY_CODE, EXCHANGE_RATES),
+    [state.currencyCode]
   );
 
   const setCurrencyCode = useCallback((code: string) => {
@@ -290,7 +294,17 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteWallet = useCallback((id: string) => {
-    setState((s) => ({ ...s, wallets: s.wallets.filter((w) => w.id !== id) }));
+    setState((s) => {
+      const wallets = s.wallets.filter((w) => w.id !== id);
+      const fallbackWalletId = wallets.find((w) => w.type !== 'savings')?.id ?? wallets[0]?.id ?? '';
+      const transactions = s.transactions.map((tr) =>
+        tr.walletId === id ? { ...tr, walletId: fallbackWalletId } : tr
+      );
+      const updatedWallets = wallets.map((w) =>
+        w.linkedWalletId === id ? { ...w, linkedWalletId: undefined } : w
+      );
+      return { ...s, wallets: updatedWallets, transactions };
+    });
   }, []);
 
   const topUpWallet = useCallback((walletId: string, amount: number, date: string, note?: string) => {
@@ -417,13 +431,18 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const deleteCategory = useCallback((id: string) => {
     setState((s) => {
-      const fallback = s.categories.find((c) => c.id !== id);
-      if (!fallback) return s;
+      const targetCat = s.categories.find((c) => c.id === id);
+      if (!targetCat) return s;
+
+      const sameTypeFallback = s.categories.find((c) => c.id !== id && c.type === targetCat.type && !c.system);
+      const anyFallback = s.categories.find((c) => c.id !== id && !c.system) ?? s.categories.find((c) => c.id !== id);
+      const fallbackId = sameTypeFallback?.id ?? anyFallback?.id ?? '';
+
       return {
         ...s,
         categories: s.categories.filter((c) => c.id !== id),
         transactions: s.transactions.map((tr) =>
-          tr.categoryId === id ? { ...tr, categoryId: fallback.id } : tr
+          tr.categoryId === id ? { ...tr, categoryId: fallbackId } : tr
         ),
       };
     });

@@ -67,6 +67,45 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
   return XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as unknown as Uint8Array;
 }
 
+function parseFlexibleNumber(val: unknown): number {
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  if (val === null || val === undefined) return 0;
+  const str = String(val).trim();
+  if (!str) return 0;
+
+  const cleaned = str.replace(/[^0-9.,-]/g, '');
+  if (!cleaned) return 0;
+
+  if (cleaned.includes('.') && cleaned.includes(',')) {
+    const normalized = cleaned.replace(/\./g, '').replace(',', '.');
+    const parsed = parseFloat(normalized);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  if (cleaned.includes(',') && !cleaned.includes('.')) {
+    const parts = cleaned.split(',');
+    if (parts[parts.length - 1].length === 3) {
+      const parsed = parseFloat(cleaned.replace(/,/g, ''));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    const parsed = parseFloat(cleaned.replace(',', '.'));
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  if (cleaned.includes('.') && !cleaned.includes(',')) {
+    const parts = cleaned.split('.');
+    if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3 && parts[0].length >= 1)) {
+      const parsed = parseFloat(cleaned.replace(/\./g, ''));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+  }
+
+  const num = Number(cleaned);
+  if (!isNaN(num)) return num;
+  const fallback = parseFloat(cleaned);
+  return isNaN(fallback) ? 0 : fallback;
+}
+
 export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
   try {
     const wb = XLSX.read(buffer, { type: 'array' });
@@ -79,9 +118,9 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
       id: String(r.ID || r.id || `w-${idx}`),
       name: String(r.Nama || r.name || 'Dompet'),
       type: (['cash', 'bank', 'savings', 'digital'].includes(String(r.Tipe || r.type)) ? String(r.Tipe || r.type) : 'cash') as Wallet['type'],
-      balance: Number(r.Saldo ?? r.balance ?? 0),
+      balance: parseFlexibleNumber(r.Saldo ?? r.balance ?? 0),
       color: String(r.Warna || r.color || '#1f7a5c'),
-      goalAmount: r.GoalAmount ? Number(r.GoalAmount) : undefined,
+      goalAmount: r.GoalAmount ? parseFlexibleNumber(r.GoalAmount) : undefined,
       institution: r.Institution ? String(r.Institution) : undefined,
       linkedWalletId: r.LinkedWalletID ? String(r.LinkedWalletID) : undefined,
     }));
@@ -97,7 +136,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
           type: String(r.Tipe || r.type).toLowerCase().includes('masuk') || String(r.Tipe || r.type) === 'income' ? 'income' : 'expense',
           icon: String(r.Ikon || r.icon || 'Tag'),
           color: String(r.Warna || r.color || '#1f7a5c'),
-          monthlyLimit: r.MonthlyLimit ? Number(r.MonthlyLimit) : undefined,
+          monthlyLimit: r.MonthlyLimit ? parseFlexibleNumber(r.MonthlyLimit) : undefined,
           system: String(r.System || r.system).toLowerCase() === 'ya' || r.system === true,
         }))
       : DEFAULT_CATEGORIES;
@@ -116,7 +155,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
         categoryId: String(r.CategoryID || r.categoryId || ''),
         walletId: String(r.WalletID || r.walletId || wallets[0]?.id || ''),
         type: String(r.Tipe || r.type).toLowerCase().includes('masuk') || String(r.Tipe || r.type) === 'income' ? 'income' : 'expense',
-        amount: Number(r.Jumlah ?? r.amount ?? 0),
+        amount: parseFlexibleNumber(r.Jumlah ?? r.amount ?? 0),
         linkedWalletId: r.LinkedWalletID ? String(r.LinkedWalletID) : undefined,
       }));
 
