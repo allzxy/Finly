@@ -21,7 +21,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'c-shopping', name: 'Belanja', icon: 'ShoppingBag', color: '#d1834f', type: 'expense' },
   { id: 'c-subscriptions', name: 'Langganan', icon: 'Repeat', color: '#6a7a4f', type: 'expense' },
   // Kategori sistem: dipakai otomatis saat isi saldo / transfer antar dompet, disembunyikan dari halaman Kategori.
-  { id: 'c-topup-in', name: 'Isi Saldo', icon: 'ArrowDownToLine', color: '#1f7a5c', type: 'income', system: true },
+  { id: 'c-topup-in', name: 'Menabung', icon: 'ArrowDownToLine', color: '#1f7a5c', type: 'income', system: true },
   { id: 'c-topup-out', name: 'Transfer Dompet', icon: 'ArrowUpFromLine', color: '#c1704a', type: 'expense', system: true },
 ];
 

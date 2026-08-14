@@ -22,7 +22,7 @@ function currentTimeString(): string {
 }
 
 export default function AddTransactionModal({ open, onClose, editing }: Props) {
-  const { categories, wallets, currency, addTransaction, updateTransaction, fromDisplay, toDisplay } = useFinance();
+  const { categories, wallets, currency, addTransaction, updateTransaction, fromDisplay, toDisplay, tCategory } = useFinance();
   const { t } = useLanguage();
   const { showToast } = useToast();
   
@@ -175,7 +175,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
             },
             ...filteredCategories.map((c) => ({
               value: c.id,
-              label: c.name,
+              label: tCategory(c),
               icon: CATEGORY_ICONS[c.icon],
               color: c.color,
             })),

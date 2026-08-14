@@ -28,6 +28,8 @@ export interface Category {
   monthlyLimit?: number;
   /** System categories are created automatically (e.g. top-up/transfer) and hidden from category management. */
   system?: boolean;
+  /** Optional custom bilingual translations (e.g. { id: 'Sewa Kos', en: 'Room Rent' }) */
+  translations?: { id?: string; en?: string };
 }
 
 export interface Transaction {

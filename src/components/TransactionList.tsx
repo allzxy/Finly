@@ -22,7 +22,7 @@ interface Props {
 }
 
 export default function TransactionList({ transactions, preview = false }: Props) {
-  const { categories, currency, deleteTransaction, clearAllTransactions, toDisplay } = useFinance();
+  const { categories, currency, deleteTransaction, clearAllTransactions, toDisplay, tCategory } = useFinance();
   const { t, locale } = useLanguage();
 
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -49,11 +49,10 @@ export default function TransactionList({ transactions, preview = false }: Props
     if (filters.date) chips.push({ key: 'date', label: formatDateChip(filters.date, locale) });
     if (filters.type !== 'all') chips.push({ key: 'type', label: filters.type === 'income' ? t('categories.income') : t('categories.expense') });
     if (filters.categoryId !== 'all') {
-      const cat = categories.find((c) => c.id === filters.categoryId);
-      chips.push({ key: 'categoryId', label: cat?.name ?? t('addTx.category') });
+      chips.push({ key: 'categoryId', label: tCategory(filters.categoryId) });
     }
     return chips;
-  }, [filters, categories, t, locale]);
+  }, [filters, tCategory, t, locale]);
 
   const clearChip = (key: keyof TransactionFilters) => {
     if (key === 'date') setFilters((f) => ({ ...f, date: '' }));
@@ -94,7 +93,7 @@ export default function TransactionList({ transactions, preview = false }: Props
             const cat = categories.find((c) => c.id === tx.categoryId);
             const Icon = cat?.icon ? CATEGORY_ICONS[cat.icon] : (tx.type === 'income' ? ArrowDownToLine : ArrowUpFromLine);
             const dateObj = new Date(tx.date + 'T00:00:00');
-            const categoryLabel = cat && !cat.system && tx.categoryId ? cat.name : (tx.type === 'income' ? t('categories.income') : t('categories.expense'));
+            const categoryLabel = tCategory(tx.categoryId);
             const iconBgColor = cat?.color ? `${cat.color}20` : (tx.type === 'income' ? 'var(--color-primary-soft)' : 'var(--color-warn-soft)');
             const iconTextColor = cat?.color ?? (tx.type === 'income' ? 'var(--color-primary)' : 'var(--color-warn)');
             return (

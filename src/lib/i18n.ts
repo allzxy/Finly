@@ -13,7 +13,7 @@ const DICT = {
     'nav.categories': 'Kategori',
     'nav.history': 'Riwayat',
     'nav.settings': 'Pengaturan',
-    'nav.menu': 'Menu',
+    'nav.menu': 'Lainnya',
     'nav.openMenu': 'Buka menu',
     'nav.closeMenu': 'Tutup menu',
     'nav.tagline': 'Sahabat Keuangan Pribadimu',
@@ -293,7 +293,7 @@ const DICT = {
     'nav.categories': 'Categories',
     'nav.history': 'History',
     'nav.settings': 'Settings',
-    'nav.menu': 'Menu',
+    'nav.menu': 'Other',
     'nav.openMenu': 'Open menu',
     'nav.closeMenu': 'Close menu',
     'nav.tagline': 'Sahabat Keuangan Pribadimu',
@@ -579,4 +579,144 @@ export function translate(lang: Language, key: TranslationKey, vars?: Record<str
     }
   }
   return text;
+}
+
+export const DEFAULT_CATEGORY_TRANSLATIONS: Record<string, Record<Language, string>> = {
+  'c-salary': { id: 'Gaji', en: 'Salary' },
+  'c-freelance': { id: 'Pekerjaan Sampingan', en: 'Freelance & Side Gig' },
+  'c-gift': { id: 'Hadiah', en: 'Gift' },
+  'c-groceries': { id: 'Belanja Bulanan', en: 'Groceries' },
+  'c-dining': { id: 'Makan-makan', en: 'Dining & Food' },
+  'c-transport': { id: 'Transportasi', en: 'Transportation' },
+  'c-housing': { id: 'Tempat Tinggal', en: 'Housing & Rent' },
+  'c-utilities': { id: 'Tagihan & Utilitas', en: 'Bills & Utilities' },
+  'c-health': { id: 'Kesehatan', en: 'Health & Medical' },
+  'c-entertainment': { id: 'Hiburan', en: 'Entertainment' },
+  'c-shopping': { id: 'Belanja', en: 'Shopping' },
+  'c-subscriptions': { id: 'Langganan', en: 'Subscriptions' },
+  'c-topup-in': { id: 'Menabung', en: 'Savings' },
+  'c-topup-out': { id: 'Transfer Dompet', en: 'Wallet Transfer' },
+};
+
+const CATEGORY_NAME_LOOKUP: Record<string, Record<Language, string>> = {
+  'gaji': { id: 'Gaji', en: 'Salary' },
+  'salary': { id: 'Gaji', en: 'Salary' },
+  'pekerjaan sampingan': { id: 'Pekerjaan Sampingan', en: 'Freelance & Side Gig' },
+  'freelance & side gig': { id: 'Pekerjaan Sampingan', en: 'Freelance & Side Gig' },
+  'freelance': { id: 'Pekerjaan Sampingan', en: 'Freelance & Side Gig' },
+  'hadiah': { id: 'Hadiah', en: 'Gift' },
+  'gift': { id: 'Hadiah', en: 'Gift' },
+  'belanja bulanan': { id: 'Belanja Bulanan', en: 'Groceries' },
+  'groceries': { id: 'Belanja Bulanan', en: 'Groceries' },
+  'makan-makan': { id: 'Makan-makan', en: 'Dining & Food' },
+  'makan': { id: 'Makan-makan', en: 'Dining & Food' },
+  'dining & food': { id: 'Makan-makan', en: 'Dining & Food' },
+  'transportasi': { id: 'Transportasi', en: 'Transportation' },
+  'transportation': { id: 'Transportasi', en: 'Transportation' },
+  'tempat tinggal': { id: 'Tempat Tinggal', en: 'Housing & Rent' },
+  'housing & rent': { id: 'Tempat Tinggal', en: 'Housing & Rent' },
+  'tagihan & utilitas': { id: 'Tagihan & Utilitas', en: 'Bills & Utilities' },
+  'bills & utilities': { id: 'Tagihan & Utilitas', en: 'Bills & Utilities' },
+  'kesehatan': { id: 'Kesehatan', en: 'Health & Medical' },
+  'health & medical': { id: 'Kesehatan', en: 'Health & Medical' },
+  'hiburan': { id: 'Hiburan', en: 'Entertainment' },
+  'entertainment': { id: 'Hiburan', en: 'Entertainment' },
+  'belanja': { id: 'Belanja', en: 'Shopping' },
+  'shopping': { id: 'Belanja', en: 'Shopping' },
+  'langganan': { id: 'Langganan', en: 'Subscriptions' },
+  'subscriptions': { id: 'Langganan', en: 'Subscriptions' },
+  'isi saldo': { id: 'Menabung', en: 'Savings' },
+  'menabung': { id: 'Menabung', en: 'Savings' },
+  'savings deposit': { id: 'Menabung', en: 'Savings' },
+  'savings': { id: 'Menabung', en: 'Savings' },
+  'top up': { id: 'Menabung', en: 'Savings' },
+  'transfer dompet': { id: 'Transfer Dompet', en: 'Wallet Transfer' },
+  'wallet transfer': { id: 'Transfer Dompet', en: 'Wallet Transfer' },
+  // Extended custom keywords
+  'kos': { id: 'Sewa Kos', en: 'Room Rent' },
+  'rent': { id: 'Sewa Kos', en: 'Room Rent' },
+  'bensin': { id: 'Bensin & BBM', en: 'Fuel & Gas' },
+  'bbm': { id: 'Bensin & BBM', en: 'Fuel & Gas' },
+  'fuel': { id: 'Bensin & BBM', en: 'Fuel & Gas' },
+  'pulsa': { id: 'Pulsa & Kuota', en: 'Mobile Data' },
+  'kuota': { id: 'Pulsa & Kuota', en: 'Mobile Data' },
+  'kopi': { id: 'Kopi & Kafe', en: 'Coffee & Cafe' },
+  'coffee': { id: 'Kopi & Kafe', en: 'Coffee & Cafe' },
+  'snack': { id: 'Cemilan & Snack', en: 'Snacks & Drinks' },
+  'cemilan': { id: 'Cemilan & Snack', en: 'Snacks & Drinks' },
+  'gym': { id: 'Olahraga & Gym', en: 'Sports & Gym' },
+  'fitness': { id: 'Olahraga & Gym', en: 'Sports & Gym' },
+  'olahraga': { id: 'Olahraga & Gym', en: 'Sports & Gym' },
+  'pet': { id: 'Hewan Peliharaan', en: 'Pets' },
+  'peliharaan': { id: 'Hewan Peliharaan', en: 'Pets' },
+  'skincare': { id: 'Perawatan Diri', en: 'Self Care & Beauty' },
+  'salon': { id: 'Perawatan Diri', en: 'Self Care & Beauty' },
+  'kursus': { id: 'Pendidikan & Kursus', en: 'Education & Courses' },
+  'pendidikan': { id: 'Pendidikan & Kursus', en: 'Education & Courses' },
+  'sekolah': { id: 'Pendidikan & Kursus', en: 'Education & Courses' },
+  'asuransi': { id: 'Asuransi', en: 'Insurance' },
+  'insurance': { id: 'Asuransi', en: 'Insurance' },
+  'zakat': { id: 'Zakat & Donasi', en: 'Charity & Donation' },
+  'donasi': { id: 'Zakat & Donasi', en: 'Charity & Donation' },
+  'cicilan': { id: 'Cicilan & Utang', en: 'Loans & Instalments' },
+  'utang': { id: 'Cicilan & Utang', en: 'Loans & Instalments' },
+  'hobi': { id: 'Hobi', en: 'Hobbies' },
+  'hobby': { id: 'Hobi', en: 'Hobbies' },
+  'parkir': { id: 'Parkir & Tol', en: 'Parking & Tolls' },
+  'tol': { id: 'Parkir & Tol', en: 'Parking & Tolls' },
+  'laundry': { id: 'Laundry', en: 'Laundry Services' },
+  'investasi': { id: 'Investasi', en: 'Investments' },
+  'investment': { id: 'Investasi', en: 'Investments' },
+  'bonus': { id: 'Bonus & THR', en: 'Bonus & Allowance' },
+  'thr': { id: 'Bonus & THR', en: 'Bonus & Allowance' },
+};
+
+export function autoTranslateCategoryName(rawName: string): { id: string; en: string } {
+  const clean = rawName.trim();
+  if (!clean) return { id: '', en: '' };
+
+  const key = clean.toLowerCase();
+  for (const [k, v] of Object.entries(CATEGORY_NAME_LOOKUP)) {
+    if (key.includes(k)) {
+      return { id: clean, en: v.en };
+    }
+  }
+
+  return { id: clean, en: clean };
+}
+
+export function getCategoryName(
+  cat: { id?: string; name?: string; translations?: { id?: string; en?: string } } | string | null | undefined,
+  lang: Language
+): string {
+  if (!cat) return lang === 'en' ? 'General' : 'Umum';
+
+  if (typeof cat === 'string') {
+    if (DEFAULT_CATEGORY_TRANSLATIONS[cat]) {
+      return DEFAULT_CATEGORY_TRANSLATIONS[cat][lang];
+    }
+    const key = cat.toLowerCase().trim();
+    if (CATEGORY_NAME_LOOKUP[key]) {
+      return CATEGORY_NAME_LOOKUP[key][lang];
+    }
+    return cat || (lang === 'en' ? 'General' : 'Umum');
+  }
+
+  // Check explicitly saved custom translations on category object
+  if (cat.translations && cat.translations[lang]) {
+    return cat.translations[lang]!;
+  }
+
+  if (cat.id && DEFAULT_CATEGORY_TRANSLATIONS[cat.id]) {
+    return DEFAULT_CATEGORY_TRANSLATIONS[cat.id][lang];
+  }
+
+  const key = (cat.name || '').toLowerCase().trim();
+  for (const [k, v] of Object.entries(CATEGORY_NAME_LOOKUP)) {
+    if (key.includes(k)) {
+      return v[lang];
+    }
+  }
+
+  return cat.name || (lang === 'en' ? 'General' : 'Umum');
 }

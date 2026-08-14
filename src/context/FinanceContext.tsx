@@ -4,6 +4,7 @@ import { CURRENCIES, BASE_CURRENCY_CODE, convertAmount, EXCHANGE_RATES } from '.
 import { useLiveRates, type LiveRatesState } from '../lib/useLiveRates';
 import { useLanguage } from './LanguageContext';
 import { DEFAULT_CATEGORIES } from '../lib/seed';
+import { getCategoryName } from '../lib/i18n';
 import { exportToExcelBuffer, importFromExcelBuffer } from '../lib/excelBackup';
 
 interface FinanceState {
@@ -40,6 +41,7 @@ interface FinanceContextValue extends FinanceState {
   exportExcelBuffer: () => Uint8Array;
   importExcelBuffer: (buffer: ArrayBuffer) => boolean;
   resetAllData: () => void;
+  tCategory: (cat: Category | string | null | undefined) => string;
 }
 
 const STORAGE_KEY = 'finly-data-v1';
@@ -157,7 +159,7 @@ const FinanceContext = createContext<FinanceContextValue | null>(null);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<FinanceState>(loadInitial);
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
 
   useEffect(() => {
     try {
@@ -195,7 +197,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     (amount: number) => {
       const useStaticScale = state.currencyCode === 'IDR' || state.currencyCode === BASE_CURRENCY_CODE;
       const ratesToUse = useStaticScale ? EXCHANGE_RATES : liveRates.rates;
-      return convertAmount(amount, BASE_CURRENCY_CODE, state.currencyCode, ratesToUse);
+      const val = convertAmount(amount, BASE_CURRENCY_CODE, state.currencyCode, ratesToUse);
+      const isZeroDecimal = state.currencyCode === 'IDR' || state.currencyCode === 'JPY';
+      return isZeroDecimal ? Math.round(val) : Math.round(val * 100) / 100;
     },
     [state.currencyCode, liveRates.rates]
   );
@@ -495,30 +499,54 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const exportExcelBuffer = useCallback(() => {
+    const isZeroDecimal = state.currencyCode === 'IDR' || state.currencyCode === 'JPY';
+    const cleanAmount = (val: number) => {
+      const disp = toDisplay(val);
+      return isZeroDecimal ? Math.round(disp) : Math.round(disp * 100) / 100;
+    };
+
     return exportToExcelBuffer({
-      wallets: state.wallets,
-      categories: state.categories,
-      transactions: state.transactions,
+      wallets: state.wallets.map((w) => ({
+        ...w,
+        balance: cleanAmount(w.balance),
+        goalAmount: typeof w.goalAmount === 'number' ? cleanAmount(w.goalAmount) : undefined,
+      })),
+      categories: state.categories.map((c) => ({
+        ...c,
+        monthlyLimit: typeof c.monthlyLimit === 'number' ? cleanAmount(c.monthlyLimit) : undefined,
+      })),
+      transactions: state.transactions.map((t) => ({
+        ...t,
+        amount: cleanAmount(t.amount),
+      })),
       currencyCode: state.currencyCode,
+      language: language,
     });
-  }, [state.wallets, state.categories, state.transactions, state.currencyCode]);
+  }, [state.wallets, state.categories, state.transactions, state.currencyCode, language, toDisplay]);
 
-  const importExcelBuffer = useCallback((buffer: ArrayBuffer): boolean => {
-    const data = importFromExcelBuffer(buffer);
-    if (!data) return false;
+  const importExcelBuffer = useCallback(
+    (buffer: ArrayBuffer): boolean => {
+      const data = importFromExcelBuffer(buffer);
+      if (!data) return false;
 
-    const categories = sanitizeCategories(data.categories);
-    const transactions = sanitizeTransactions(data.transactions, categories);
+      if (data.language === 'id' || data.language === 'en') {
+        setLanguage(data.language);
+      }
 
-    setState({
-      wallets: data.wallets,
-      categories,
-      transactions,
-      currencyCode: data.currencyCode || 'IDR',
-      selectedMonth: currentMonthKey(),
-    });
-    return true;
-  }, []);
+      const categories = sanitizeCategories(data.categories);
+      const transactions = sanitizeTransactions(data.transactions, categories);
+
+      setState({
+        wallets: data.wallets,
+        categories,
+        transactions,
+        currencyCode: data.currencyCode || 'IDR',
+        selectedMonth: currentMonthKey(),
+      });
+      return true;
+    },
+    [setLanguage]
+  );
 
   const resetAllData = useCallback(() => {
     setState({
@@ -529,6 +557,18 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       selectedMonth: currentMonthKey(),
     });
   }, []);
+
+  const tCategory = useCallback(
+    (cat: Category | string | null | undefined) => {
+      if (!cat) return language === 'en' ? 'General' : 'Umum';
+      if (typeof cat === 'string') {
+        const found = state.categories.find((c) => c.id === cat) || DEFAULT_CATEGORIES.find((c) => c.id === cat);
+        return getCategoryName(found || { id: cat, name: cat }, language);
+      }
+      return getCategoryName(cat, language);
+    },
+    [state.categories, language]
+  );
 
   const value: FinanceContextValue = {
     ...state,
@@ -557,6 +597,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     exportExcelBuffer,
     importExcelBuffer,
     resetAllData,
+    tCategory,
   };
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import { useFinance } from '../context/FinanceContext';
+import { useLanguage } from '../context/LanguageContext';
 import { CATEGORY_ICONS, CATEGORY_ICON_OPTIONS } from '../lib/icons';
+import { autoTranslateCategoryName } from '../lib/i18n';
 import type { Category, TransactionType } from '../lib/types';
 
 const COLOR_PALETTE = [
@@ -20,24 +22,30 @@ interface Props {
 
 export default function CategoryFormModal({ open, onClose, editing, defaultType = 'expense' }: Props) {
   const { addCategory, updateCategory, currency, fromDisplay, toDisplay } = useFinance();
+  const { t, language } = useLanguage();
   const [name, setName] = useState('');
+  const [nameEn, setNameEn] = useState('');
   const [type, setType] = useState<TransactionType>(defaultType);
   const [icon, setIcon] = useState(CATEGORY_ICON_OPTIONS[0]);
   const [color, setColor] = useState(COLOR_PALETTE[0]);
   const [limit, setLimit] = useState('');
   const isEditing = !!editing;
 
+  const autoSuggestedEn = autoTranslateCategoryName(name).en;
+
   useEffect(() => {
     if (!open) return;
     if (editing) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(editing.name);
+      setNameEn(editing.translations?.en ?? '');
       setType(editing.type);
       setIcon(editing.icon);
       setColor(editing.color);
       setLimit(editing.monthlyLimit ? String(Number(toDisplay(editing.monthlyLimit).toFixed(2))) : '');
     } else {
       setName('');
+      setNameEn('');
       setType(defaultType);
       setIcon(CATEGORY_ICON_OPTIONS[0]);
       setColor(COLOR_PALETTE[0]);
@@ -51,11 +59,16 @@ export default function CategoryFormModal({ open, onClose, editing, defaultType 
     if (!name.trim()) return;
     const parsedLimit = limit.trim() ? parseFloat(limit) : undefined;
     const monthlyLimit = type === 'expense' && parsedLimit && parsedLimit > 0 ? fromDisplay(parsedLimit) : undefined;
+    const autoEn = autoTranslateCategoryName(name.trim()).en;
+    const translations = {
+      id: name.trim(),
+      en: nameEn.trim() || autoEn || name.trim(),
+    };
 
     if (isEditing && editing) {
-      updateCategory(editing.id, { name: name.trim(), icon, color, monthlyLimit });
+      updateCategory(editing.id, { name: name.trim(), icon, color, monthlyLimit, translations });
     } else {
-      addCategory({ name: name.trim(), icon, color, type, monthlyLimit });
+      addCategory({ name: name.trim(), icon, color, type, monthlyLimit, translations });
     }
     onClose();
   };
@@ -89,10 +102,15 @@ export default function CategoryFormModal({ open, onClose, editing, defaultType 
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="cth. Hiburan"
+            placeholder="cth. Sewa Kos / Bensin"
             required
             className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition focus:border-[var(--color-primary)]"
           />
+          {name.trim() ? (
+            <p className="mt-1 text-[11px] font-medium text-[var(--color-primary)]">
+              ✨ Auto-Terjemahan Inggris: <span className="italic font-semibold">{autoSuggestedEn}</span>
+            </p>
+          ) : null}
         </div>
 
         <div>

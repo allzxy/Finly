@@ -15,7 +15,7 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
   const handleExport = () => {
     try {
       const buffer = exportExcelBuffer();
-      const blob = new Blob([buffer.buffer as ArrayBuffer], {
+      const blob = new Blob([buffer as unknown as BlobPart], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
       const url = URL.createObjectURL(blob);
@@ -26,9 +26,10 @@ export default function BackupModal({ open, onClose }: { open: boolean; onClose:
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       showToast(t('backup.exportSuccess'), 'success');
-    } catch {
+    } catch (err) {
+      console.error('Export Excel Error:', err);
       showToast(t('backup.exportError'), 'error');
     }
   };

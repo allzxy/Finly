@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutGrid, Wallet, PiggyBank, Tag, History, Settings, Plus, MoreHorizontal } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,17 +14,23 @@ export default function FloatingNavbar() {
   const moreMenuRefDesktop = useRef<HTMLDivElement>(null);
   const moreMenuRefMobile = useRef<HTMLDivElement>(null);
 
-  const PRIMARY_NAV_ITEMS = [
-    { to: '/', label: t('nav.dashboard'), icon: LayoutGrid, end: true },
-    { to: '/wallets', label: t('nav.wallets'), icon: Wallet, end: false },
-    { to: '/history', label: t('nav.history'), icon: History, end: false },
-  ];
+  const PRIMARY_NAV_ITEMS = useMemo(
+    () => [
+      { to: '/', label: t('nav.dashboard'), icon: LayoutGrid, end: true },
+      { to: '/wallets', label: t('nav.wallets'), icon: Wallet, end: false },
+      { to: '/history', label: t('nav.history'), icon: History, end: false },
+    ],
+    [t]
+  );
 
-  const MORE_NAV_ITEMS = [
-    { to: '/savings', label: t('nav.savings'), icon: PiggyBank },
-    { to: '/categories', label: t('nav.categories'), icon: Tag },
-    { to: '/settings', label: t('nav.settings'), icon: Settings },
-  ];
+  const MORE_NAV_ITEMS = useMemo(
+    () => [
+      { to: '/savings', label: t('nav.savings'), icon: PiggyBank },
+      { to: '/categories', label: t('nav.categories'), icon: Tag },
+      { to: '/settings', label: t('nav.settings'), icon: Settings },
+    ],
+    [t]
+  );
 
   const isMoreActive = MORE_NAV_ITEMS.some((item) => location.pathname === item.to);
 
@@ -243,7 +249,7 @@ export default function FloatingNavbar() {
             <div className={`flex h-7 w-7 items-center justify-center rounded-full transition ${isMoreActive || moreOpen ? 'bg-[var(--color-primary-soft)]' : ''}`}>
               <MoreHorizontal size={18} strokeWidth={isMoreActive || moreOpen ? 2.4 : 1.8} />
             </div>
-            <span className="text-[10px] font-medium leading-none mt-0.5">Lainnya</span>
+            <span className="text-[10px] font-medium leading-none mt-0.5">{t('nav.menu')}</span>
           </button>
 
           {moreOpen && (

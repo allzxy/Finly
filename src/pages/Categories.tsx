@@ -10,7 +10,7 @@ import type { Category, TransactionType } from '../lib/types';
 import { Plus, Pencil, Trash2, Wallet2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 export default function Categories() {
-  const { categories, transactions, selectedMonth, deleteCategory, currency, toDisplay } = useFinance();
+  const { categories, transactions, selectedMonth, deleteCategory, currency, toDisplay, tCategory } = useFinance();
   const { t } = useLanguage();
   const [tab, setTab] = useState<TransactionType>('expense');
   const [formOpen, setFormOpen] = useState(false);
@@ -133,7 +133,7 @@ export default function Categories() {
                       {Icon ? <Icon size={18} /> : null}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-[var(--color-ink)]">{c.name}</p>
+                      <p className="truncate text-sm font-bold text-[var(--color-ink)]">{tCategory(c)}</p>
                       {hasLimit ? (
                         <p className={`truncate text-xs ${overLimit ? 'font-medium text-[var(--color-warn)]' : 'text-[var(--color-muted)]'}`}>
                           {formatMoney(toDisplay(totalAmount), currency, { compact: true })} / {formatMoney(toDisplay(c.monthlyLimit ?? 0), currency, { compact: true })}
