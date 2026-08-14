@@ -119,7 +119,7 @@ export default function TransactionList({ transactions, preview = false }: Props
 
             if (tx.linkedWalletId) {
               if (isSavingsTarget) {
-                categoryLabel = tCategory('c-topup-in', tx.type);
+                categoryLabel = tCategory('c-savings-in', tx.type);
               } else {
                 const descLower = (tx.description || '').toLowerCase();
                 const isAutoDesc = descLower.startsWith('transfer ke') || descLower.startsWith('transfer dari') || descLower.startsWith('transfer to') || descLower.startsWith('transfer from');

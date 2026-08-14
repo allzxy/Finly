@@ -28,8 +28,13 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
       // Skip internal transfers between two real wallets
       if (tx.type === 'expense' && tx.linkedWalletId) return;
 
-      const wallet = wallets.find((w) => w.id === tx.walletId);
-      const isSavings = !!tx.linkedWalletId || wallet?.type === 'savings';
+      const targetW = wallets.find((w) => w.id === tx.walletId);
+      const linkedW = tx.linkedWalletId ? wallets.find((w) => w.id === tx.linkedWalletId) : undefined;
+
+      // Ignore transactions from deleted wallets
+      if (!targetW) return;
+
+      const isSavings = targetW.type === 'savings' || linkedW?.type === 'savings';
 
       if (isSavings) {
         savingsTotals.set(tx.categoryId, (savingsTotals.get(tx.categoryId) ?? 0) + tx.amount);
@@ -75,10 +80,11 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
     const savingsList = Array.from(savingsTotals.entries()).map(([categoryId, value]) => {
       sumSav += value;
       const cat = categories.find((c) => c.id === categoryId);
+      const isSystemTopup = !cat || cat.id === 'c-topup-in' || cat.id === 'c-savings-in' || cat.system;
       return {
         categoryId,
         type: 'savings' as const,
-        name: cat ? tCategory(cat) : t('nav.savings'),
+        name: isSystemTopup ? tCategory('c-savings-in') : tCategory(cat),
         value,
         color: cat?.color ?? 'var(--color-accent)',
         icon: cat?.icon ?? 'PiggyBank',
@@ -92,10 +98,18 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
     return { data: combined, totalExpense: sumExp, totalIncome: sumInc, totalSavings: sumSav };
   }, [transactions, categories, wallets, tCategory, t]);
 
+  const totalSavingsGoal = useMemo(() => {
+    return wallets.filter((w) => w.type === 'savings').reduce((s, w) => s + (w.goalAmount || 0), 0);
+  }, [wallets]);
+
   const grandTotal = totalExpense + totalIncome + totalSavings;
   const topExpense = data.find((d) => d.type === 'expense');
   const topIncome = data.find((d) => d.type === 'income');
   const topSavings = data.find((d) => d.type === 'savings');
+
+  const topSavingsPct = topSavings
+    ? (totalSavingsGoal > 0 ? Math.min(100, (topSavings.value / totalSavingsGoal) * 100) : (grandTotal > 0 ? (topSavings.value / grandTotal) * 100 : 0))
+    : 0;
 
   return (
     <div className="flex h-full flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-flat)] sm:p-5">
@@ -154,7 +168,7 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
                 <div className="flex min-w-0 items-center gap-2.5 rounded-xl bg-[var(--color-accent-soft)]/60 px-3 py-2 text-xs">
                   <PiggyBank size={16} className="shrink-0 text-[var(--color-accent)]" />
                   <p className="min-w-0 truncate text-[var(--color-ink-soft)]">
-                    {t('categories.topSavingsLabel', { name: topSavings.name })} ({formatMoney(toDisplay(topSavings.value), currency, { compact: true })})
+                    {t('categories.topSavingsLabel', { name: topSavings.name })} ({formatMoney(toDisplay(topSavings.value), currency, { compact: true })}{topSavingsPct > 0 ? ` · ${topSavingsPct.toFixed(0)}% dari target` : ''})
                   </p>
                 </div>
               )}
@@ -170,6 +184,11 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
                 : grandTotal > 0
                 ? (entry.value / grandTotal) * 100
                 : 0;
+
+              const savingsGoalPct = entry.type === 'savings' && totalSavingsGoal > 0
+                ? Math.min(100, (entry.value / totalSavingsGoal) * 100)
+                : 0;
+
               const overLimit = hasLimit && entry.value > (entry.limit ?? 0);
               const barColor = entry.type === 'income' ? 'var(--color-primary)' : entry.type === 'savings' ? 'var(--color-accent)' : overLimit ? 'var(--color-warn)' : entry.color;
               const badgeStyle = entry.type === 'income'
@@ -182,6 +201,12 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
                 : entry.type === 'savings'
                 ? t('categories.tagSavings')
                 : t('categories.tagOut');
+
+              const displayPctText = entry.type === 'savings'
+                ? (totalSavingsGoal > 0 ? ` (${savingsGoalPct.toFixed(0)}% dari target)` : '')
+                : '';
+
+              const barWidthPct = entry.type === 'savings' && totalSavingsGoal > 0 ? savingsGoalPct : pct;
 
               return (
                 <div key={`${entry.type}-${entry.categoryId}`} className="flex items-center gap-3">
@@ -202,11 +227,12 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
                       </div>
                       <span className={`ml-2 shrink-0 ${overLimit ? 'font-semibold text-[var(--color-warn)]' : 'text-[var(--color-muted)]'}`}>
                         {formatMoney(toDisplay(entry.value), currency)}
+                        {displayPctText}
                         {hasLimit ? ` / ${formatMoney(toDisplay(entry.limit ?? 0), currency, { compact: true })}` : ''}
                       </span>
                     </div>
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
-                      <div className="animate-grow h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor, animationDelay: `${i * 40}ms` }} />
+                      <div className="animate-grow h-full rounded-full" style={{ width: `${Math.min(100, Math.max(2, barWidthPct))}%`, backgroundColor: barColor, animationDelay: `${i * 40}ms` }} />
                     </div>
                     {overLimit && <p className="mt-1 text-[10px] font-medium text-[var(--color-warn)]">{t('categories.overLimit')}</p>}
                   </div>

@@ -162,7 +162,7 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
     let resolvedCategory = categoryLookup.get(t.categoryId);
     const isSavingsTarget = data.wallets.some((w) => w.id === (t.type === 'income' ? t.walletId : t.linkedWalletId) && w.type === 'savings');
 
-    if (!resolvedCategory || !resolvedCategory.trim() || resolvedCategory === 'Transfer Dompet' || resolvedCategory === 'Wallet Transfer' || resolvedCategory === 'Isi Saldo' || resolvedCategory === 'Savings Deposit') {
+    if (!resolvedCategory || !resolvedCategory.trim() || resolvedCategory === 'Transfer Dompet' || resolvedCategory === 'Wallet Transfer') {
       if (isSavingsTarget) {
         resolvedCategory = isEn ? 'Savings' : 'Menabung';
       } else if (t.linkedWalletId) {
@@ -173,6 +173,8 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
           const toWName = walletLookup.get(t.linkedWalletId) || (isEn ? 'Wallet' : 'Dompet');
           resolvedCategory = isEn ? `Transfer to ${toWName}` : `Transfer ke ${toWName}`;
         }
+      } else if (t.categoryId === 'c-topup-in' || (t.description && (t.description.toLowerCase().includes('isi saldo') || t.description.toLowerCase().includes('topup') || t.description.toLowerCase().includes('top-up')))) {
+        resolvedCategory = isEn ? 'Top-Up' : 'Isi Saldo';
       } else {
         resolvedCategory = t.type === 'income' ? (isEn ? 'Income' : 'Pemasukan') : (isEn ? 'Expense' : 'Pengeluaran');
       }

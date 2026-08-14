@@ -159,7 +159,7 @@ const FinanceContext = createContext<FinanceContextValue | null>(null);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<FinanceState>(loadInitial);
-  const { t, language, setLanguage } = useLanguage();
+  const { t, locale, language, setLanguage } = useLanguage();
 
   useEffect(() => {
     try {
@@ -269,12 +269,15 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       const wallets = s.wallets.map((w) => {
         let bal = w.balance;
         
-        // Kurangi saldo HANYA di dompet tempat transaksi berada
         if (w.id === tx.walletId) {
           bal -= (tx.type === 'income' ? tx.amount : -tx.amount);
         }
+        if (tx.linkedWalletId && w.id === tx.linkedWalletId) {
+          bal += (tx.type === 'income' ? tx.amount : -tx.amount);
+        }
         
-        return { ...w, balance: bal };
+        // Jamin saldo tidak pernah minus (Math.max 0)
+        return { ...w, balance: Math.max(0, bal) };
       });
 
       return { ...s, transactions: s.transactions.filter((tr) => tr.id !== id), wallets };
@@ -288,7 +291,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           .filter((tr) => tr.walletId === w.id)
           .reduce((sum, tr) => sum + (tr.type === 'income' ? tr.amount : -tr.amount), 0);
 
-        return { ...w, balance: w.balance - delta };
+        // Jamin saldo tidak pernah minus saat reset total riwayat
+        const newBal = Math.max(0, w.balance - delta);
+        return { ...w, balance: newBal };
       });
       return { ...s, transactions: [], wallets };
     });
@@ -305,12 +310,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const deleteWallet = useCallback((id: string) => {
     setState((s) => {
       const wallets = s.wallets.filter((w) => w.id !== id);
-      const fallbackWalletId = wallets.find((w) => w.type !== 'savings')?.id ?? wallets[0]?.id ?? '';
-      const transactions = s.transactions.map((tr) =>
-        tr.walletId === id ? { ...tr, walletId: fallbackWalletId } : tr
-      );
       const updatedWallets = wallets.map((w) =>
         w.linkedWalletId === id ? { ...w, linkedWalletId: undefined } : w
+      );
+      // Hapus seluruh transaksi yang terikat dengan dompet/tabungan yang dihapus
+      const transactions = s.transactions.filter(
+        (tr) => tr.walletId !== id && tr.linkedWalletId !== id
       );
       return { ...s, wallets: updatedWallets, transactions };
     });
@@ -319,14 +324,19 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const topUpWallet = useCallback((walletId: string, amount: number, date: string, note?: string) => {
     if (amount <= 0) return;
     setState((s) => {
-      const topupCategory = s.categories.find((c) => c.id === 'c-topup-in')?.id ?? s.categories.find((c) => c.type === 'income')?.id ?? '';
+      const wallet = s.wallets.find((w) => w.id === walletId);
+      const isSavings = wallet?.type === 'savings';
+      const topupCategory = isSavings
+        ? (s.categories.find((c) => c.id === 'c-savings-in')?.id ?? 'c-savings-in')
+        : (s.categories.find((c) => c.id === 'c-topup-in')?.id ?? 'c-topup-in');
+
       const now = new Date();
       const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const tx: Transaction = {
         id: uid('t'),
         date,
         time,
-        description: note?.trim() || t('tx.defaultTopup'),
+        description: note?.trim() || (isSavings ? (locale.startsWith('id') ? 'Menabung' : 'Savings Deposit') : t('tx.defaultTopup')),
         categoryId: topupCategory,
         walletId,
         type: 'income',
@@ -336,7 +346,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       const txMonth = date.slice(0, 7);
       return { ...s, transactions: [tx, ...s.transactions], wallets, selectedMonth: txMonth };
     });
-  }, [t]);
+  }, [t, locale]);
 
   const transferBetweenWallets = useCallback(
     (fromWalletId: string, toWalletId: string, amount: number, date: string, note?: string) => {
@@ -348,8 +358,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
         const outCategory = s.categories.find((c) => c.id === 'c-topup-out')?.id ?? s.categories.find((c) => c.type === 'expense')?.id ?? '';
         const inCategory = s.categories.find((c) => c.id === 'c-topup-in')?.id ?? s.categories.find((c) => c.type === 'income')?.id ?? '';
-        const label = note?.trim() || t('tx.defaultTransferOut', { name: toWallet.name });
-        const labelIn = note?.trim() || t('tx.defaultTransferIn', { name: fromWallet.name });
+        const defaultTransferDesc = locale.startsWith('id')
+          ? `Transfer dari ${fromWallet.name} ke ${toWallet.name}`
+          : `Transfer from ${fromWallet.name} to ${toWallet.name}`;
+        const label = note?.trim() || defaultTransferDesc;
         const now = new Date();
         const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -368,7 +380,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           id: uid('t'),
           date,
           time,
-          description: labelIn,
+          description: label,
           categoryId: inCategory,
           walletId: toWalletId,
           type: 'income',
@@ -397,7 +409,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         const targetWallet = s.wallets.find((w) => w.id === targetWalletId);
         if (!savingsWallet || !targetWallet) return s;
 
-        const category = s.categories.find((c) => c.id === 'c-topup-in')?.id ?? s.categories.find((c) => c.type === 'income')?.id ?? '';
+        const category = s.categories.find((c) => c.id === 'c-savings-in')?.id ?? s.categories.find((c) => c.id === 'c-topup-in')?.id ?? '';
         const now = new Date();
         const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -556,13 +568,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const resetAllData = useCallback(() => {
-    setState({
-      wallets: [],
-      categories: DEFAULT_CATEGORIES,
-      transactions: [],
-      currencyCode: 'IDR',
-      selectedMonth: currentMonthKey(),
-    });
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    setState(loadInitial());
   }, []);
 
   const tCategory = useCallback(

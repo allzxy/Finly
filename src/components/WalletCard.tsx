@@ -61,20 +61,40 @@ export default function WalletCard({ wallet, wallets, onDelete, onEdit, onFund }
 
       <p className="font-bold tracking-tight mt-4 truncate text-xl text-[var(--color-ink)] sm:mt-5 sm:text-2xl">{formatMoney(toDisplay(wallet.balance), currency)}</p>
 
-      {progress !== null && (
+      {progress !== null && wallet.type === 'savings' ? (
         <div className="mt-3">
           <div className="flex items-center justify-between text-[11px] text-[var(--color-muted)]">
             <span>{t('wallets.goalProgress')}</span>
             <span>{formatMoney(toDisplay(wallet.goalAmount ?? 0), currency, { compact: true })}</span>
           </div>
           <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
-            <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: wallet.color }} />
+            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, progress)}%`, backgroundColor: wallet.color }} />
+          </div>
+          <div className="mt-1 flex items-center justify-between text-[11px]">
+            <span className="text-[var(--color-muted)] font-medium">
+              {wallet.goalAmount && wallet.goalAmount > wallet.balance
+                ? `Sisa ${formatMoney(toDisplay(wallet.goalAmount - wallet.balance), currency, { compact: true })} lagi (${(((wallet.goalAmount - wallet.balance) / wallet.goalAmount) * 100).toFixed(0)}%)`
+                : 'Target Terkumpul! 🎉'}
+            </span>
+            <span className="font-semibold shrink-0 ml-1" style={{ color: wallet.color }}>
+              {progress.toFixed(0)}%
+            </span>
+          </div>
+        </div>
+      ) : progress !== null ? (
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-[11px] text-[var(--color-muted)]">
+            <span>{t('wallets.goalProgress')}</span>
+            <span>{formatMoney(toDisplay(wallet.goalAmount ?? 0), currency, { compact: true })}</span>
+          </div>
+          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
+            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, progress)}%`, backgroundColor: wallet.color }} />
           </div>
           <p className="mt-1 text-right text-[11px] font-medium" style={{ color: wallet.color }}>
             {t('wallets.reached', { pct: progress.toFixed(0) })}
           </p>
         </div>
-      )}
+      ) : null}
 
       {linkedWallet && (
         <p className="mt-2 truncate text-[11px] text-[var(--color-muted)]">

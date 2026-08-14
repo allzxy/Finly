@@ -594,7 +594,8 @@ export const DEFAULT_CATEGORY_TRANSLATIONS: Record<string, Record<Language, stri
   'c-entertainment': { id: 'Hiburan', en: 'Entertainment' },
   'c-shopping': { id: 'Belanja', en: 'Shopping' },
   'c-subscriptions': { id: 'Langganan', en: 'Subscriptions' },
-  'c-topup-in': { id: 'Menabung', en: 'Savings' },
+  'c-topup-in': { id: 'Isi Saldo', en: 'Top-Up' },
+  'c-savings-in': { id: 'Menabung', en: 'Savings' },
   'c-topup-out': { id: 'Transfer Dompet', en: 'Wallet Transfer' },
 };
 
@@ -625,11 +626,12 @@ const CATEGORY_NAME_LOOKUP: Record<string, Record<Language, string>> = {
   'shopping': { id: 'Belanja', en: 'Shopping' },
   'langganan': { id: 'Langganan', en: 'Subscriptions' },
   'subscriptions': { id: 'Langganan', en: 'Subscriptions' },
-  'isi saldo': { id: 'Menabung', en: 'Savings' },
+  'isi saldo': { id: 'Isi Saldo', en: 'Top-Up' },
+  'top up': { id: 'Isi Saldo', en: 'Top-Up' },
+  'top-up': { id: 'Isi Saldo', en: 'Top-Up' },
   'menabung': { id: 'Menabung', en: 'Savings' },
   'savings deposit': { id: 'Menabung', en: 'Savings' },
   'savings': { id: 'Menabung', en: 'Savings' },
-  'top up': { id: 'Menabung', en: 'Savings' },
   'transfer dompet': { id: 'Transfer Dompet', en: 'Wallet Transfer' },
   'wallet transfer': { id: 'Transfer Dompet', en: 'Wallet Transfer' },
   // Extended custom keywords

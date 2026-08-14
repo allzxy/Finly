@@ -48,7 +48,7 @@ export default function Dashboard() {
     .filter((tx) => tx.type === 'expense' && !tx.linkedWalletId)
     .reduce((s, tx) => s + tx.amount, 0);
   
-  const balance = wallets.filter((w) => w.type !== 'savings').reduce((s, w) => s + w.balance, 0);
+  const balance = Math.max(0, wallets.filter((w) => w.type !== 'savings').reduce((s, w) => s + w.balance, 0));
 
   const priorIncome = priorScopeTx
     .filter((tx) => tx.type === 'income' && !tx.linkedWalletId)
