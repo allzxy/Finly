@@ -160,19 +160,29 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
 
     // Smart Category Fallback Resolution
     let resolvedCategory = categoryLookup.get(t.categoryId);
-    if (!resolvedCategory || !resolvedCategory.trim() || resolvedCategory === 'Isi Saldo' || resolvedCategory === 'Savings Deposit') {
-      if (t.linkedWalletId || (t.description && (t.description.toLowerCase().includes('isi saldo') || t.description.toLowerCase().includes('tabungan')))) {
-        resolvedCategory = t.type === 'income' ? (isEn ? 'Savings' : 'Menabung') : (isEn ? 'Wallet Transfer' : 'Transfer Dompet');
+    const isSavingsTarget = data.wallets.some((w) => w.id === (t.type === 'income' ? t.walletId : t.linkedWalletId) && w.type === 'savings');
+
+    if (!resolvedCategory || !resolvedCategory.trim() || resolvedCategory === 'Transfer Dompet' || resolvedCategory === 'Wallet Transfer' || resolvedCategory === 'Isi Saldo' || resolvedCategory === 'Savings Deposit') {
+      if (isSavingsTarget) {
+        resolvedCategory = isEn ? 'Savings' : 'Menabung';
+      } else if (t.linkedWalletId) {
+        if (t.type === 'income') {
+          const fromWName = walletLookup.get(t.linkedWalletId) || (isEn ? 'Wallet' : 'Dompet');
+          resolvedCategory = isEn ? `Transfer from ${fromWName}` : `Transfer dari ${fromWName}`;
+        } else {
+          const toWName = walletLookup.get(t.linkedWalletId) || (isEn ? 'Wallet' : 'Dompet');
+          resolvedCategory = isEn ? `Transfer to ${toWName}` : `Transfer ke ${toWName}`;
+        }
       } else {
-        resolvedCategory = isEn ? 'General' : 'Umum';
+        resolvedCategory = t.type === 'income' ? (isEn ? 'Income' : 'Pemasukan') : (isEn ? 'Expense' : 'Pengeluaran');
       }
     }
 
-    // Smart Wallet & Destination Resolution (Clear source vs destination wallet display!)
+    // Smart Wallet & Destination Resolution (Clear source ➔ destination flow)
     let sourceWalletName = walletLookup.get(t.walletId) || t.walletId || (isEn ? 'Wallet' : 'Dompet');
     let targetWalletName = t.linkedWalletId ? (walletLookup.get(t.linkedWalletId) || t.linkedWalletId) : '';
 
-    // For savings deposit transactions, money flows from real bank wallet (t.linkedWalletId) to savings goal (t.walletId)
+    // If income transfer or savings deposit, money comes from t.linkedWalletId into t.walletId
     if (t.type === 'income' && t.linkedWalletId) {
       sourceWalletName = walletLookup.get(t.linkedWalletId) || t.linkedWalletId;
       targetWalletName = walletLookup.get(t.walletId) || t.walletId;

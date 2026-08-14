@@ -16,7 +16,7 @@ interface Props {
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 export default function CategoryBreakdown({ transactions, categories, onManage }: Props) {
-  const { currency, wallets, toDisplay } = useFinance();
+  const { currency, wallets, toDisplay, tCategory } = useFinance();
   const { t } = useLanguage();
 
   const { data, totalExpense, totalIncome, totalSavings } = useMemo(() => {
@@ -50,7 +50,7 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
       return {
         categoryId,
         type: 'expense' as const,
-        name: cat && !cat.system && categoryId ? cat.name : t('categories.expense'),
+        name: cat ? tCategory(cat) : t('categories.expense'),
         value,
         color: cat?.color ?? 'var(--color-warn)',
         icon: cat?.icon,
@@ -64,7 +64,7 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
       return {
         categoryId,
         type: 'income' as const,
-        name: cat && !cat.system && categoryId ? cat.name : t('categories.income'),
+        name: cat ? tCategory(cat) : t('categories.income'),
         value,
         color: cat?.color ?? 'var(--color-primary)',
         icon: cat?.icon,
@@ -78,7 +78,7 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
       return {
         categoryId,
         type: 'savings' as const,
-        name: cat && !cat.system && categoryId ? cat.name : t('nav.savings'),
+        name: cat ? tCategory(cat) : t('nav.savings'),
         value,
         color: cat?.color ?? 'var(--color-accent)',
         icon: cat?.icon ?? 'PiggyBank',
@@ -90,7 +90,7 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
     const combined = [...expenseList, ...incomeList, ...savingsList].sort((a, b) => b.value - a.value);
 
     return { data: combined, totalExpense: sumExp, totalIncome: sumInc, totalSavings: sumSav };
-  }, [transactions, categories, wallets, t]);
+  }, [transactions, categories, wallets, tCategory, t]);
 
   const grandTotal = totalExpense + totalIncome + totalSavings;
   const topExpense = data.find((d) => d.type === 'expense');
@@ -130,7 +130,7 @@ export default function CategoryBreakdown({ transactions, categories, onManage }
                 color: d.type === 'income' ? 'var(--color-primary)' : d.type === 'savings' ? 'var(--color-accent)' : d.color,
               }))}
               centerLabel={totalExpense > 0 ? t('categories.expense') : t('categories.totalInLabel')}
-              centerValue={formatMoney(toDisplay(totalExpense > 0 ? totalExpense : totalIncome + totalSavings), currency, { compact: true })}
+              centerValue={formatMoney(toDisplay(totalExpense > 0 ? totalExpense : totalIncome), currency, { compact: true })}
             />
 
             <div className="flex flex-1 flex-col gap-2 w-full">

@@ -53,11 +53,11 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
       setDescription('');
       setAmount('');
       setCategoryId('');
-      setWalletId(activeWallets[0]?.id ?? '');
+      setWalletId((prev) => (prev && activeWallets.some((w) => w.id === prev) ? prev : activeWallets[0]?.id ?? ''));
       setDate(new Date().toISOString().slice(0, 10));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editing, toDisplay]);
+  }, [open, editing, toDisplay, activeWallets.length]);
 
   const reset = () => {
     setDescription('');
@@ -68,7 +68,22 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
-    if (!description.trim() || !parsedAmount || parsedAmount <= 0 || !walletId) return;
+
+    if (!description.trim()) {
+      showToast('Isi deskripsi transaksi terlebih dahulu!', 'warn');
+      return;
+    }
+
+    if (!parsedAmount || parsedAmount <= 0) {
+      showToast('Isi nominal transaksi yang valid!', 'warn');
+      return;
+    }
+
+    const selectedWId = (walletId && activeWallets.some((w) => w.id === walletId)) ? walletId : activeWallets[0]?.id;
+    if (!selectedWId) {
+      showToast('Pilih atau buat dompet terlebih dahulu!', 'warn');
+      return;
+    }
     
     const finalCategory =
       categoryId && categories.some((c) => c.id === categoryId && c.type === type)
@@ -83,7 +98,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
         time: editing.time || nowTime,
         description: description.trim(),
         categoryId: finalCategory,
-        walletId,
+        walletId: selectedWId,
         type,
         amount: fromDisplay(parsedAmount),
       });
@@ -94,7 +109,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
         time: nowTime,
         description: description.trim(),
         categoryId: finalCategory,
-        walletId,
+        walletId: selectedWId,
         type,
         amount: fromDisplay(parsedAmount),
       });
@@ -176,7 +191,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
             ...filteredCategories.map((c) => ({
               value: c.id,
               label: tCategory(c),
-              icon: CATEGORY_ICONS[c.icon],
+              icon: (c.icon && CATEGORY_ICONS[c.icon]) || CATEGORY_ICONS['Tag'],
               color: c.color,
             })),
           ]}
@@ -190,7 +205,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
           options={activeWallets.map((w) => ({
             value: w.id,
             label: w.name,
-            icon: WALLET_ICONS[w.type],
+            icon: (w.type && WALLET_ICONS[w.type]) || WALLET_ICONS['cash'],
             color: w.color,
           }))}
         />

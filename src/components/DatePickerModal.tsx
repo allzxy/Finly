@@ -43,13 +43,13 @@ export default function DatePickerModal({ open, onClose, value, onChange, nested
   }, [open, value]);
 
   const WEEKDAY_LABELS = useMemo(() => {
-    return Array.from({ length: 7 }).map((_, i) => new Date(2024, 0, i + 7).toLocaleDateString(locale, { weekday: 'short' }));
+    return Array.from({ length: 7 }).map((_, i) => new Date(2024, 0, i + 7).toLocaleDateString(locale || 'id-ID', { weekday: 'short' }));
   }, [locale]);
 
   const firstOfMonth = new Date(viewYear, viewMonth, 1);
   const startWeekday = firstOfMonth.getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const monthLabel = firstOfMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  const monthLabel = firstOfMonth.toLocaleDateString(locale || 'id-ID', { month: 'long', year: 'numeric' });
 
   const today = new Date();
   const todayKey = toDateKey(today.getFullYear(), today.getMonth(), today.getDate());

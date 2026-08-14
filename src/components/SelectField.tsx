@@ -25,6 +25,8 @@ interface Props {
   nested?: boolean;
 }
 
+const isValidIcon = (icon: any) => !!icon && (typeof icon === 'function' || typeof icon === 'object');
+
 export default function SelectField({
   label,
   value,
@@ -39,7 +41,7 @@ export default function SelectField({
   const [open, setOpen] = useState(false);
   const { t } = useLanguage();
   const selected = options.find((o) => o.value === value);
-  const SelectedIcon = selected?.icon;
+  const SelectedIcon = isValidIcon(selected?.icon) ? selected?.icon : null;
   const finalPlaceholder = placeholder || t('select.placeholder');
 
   return (
@@ -75,7 +77,7 @@ export default function SelectField({
             <p className="py-6 text-center text-sm text-[var(--color-muted)]">{t('select.empty')}</p>
           ) : (
             options.map((opt) => {
-              const OptIcon = opt.icon;
+              const OptIcon = isValidIcon(opt.icon) ? opt.icon : null;
               const isSelected = value === opt.value;
               return (
                 <button

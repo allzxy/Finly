@@ -686,10 +686,14 @@ export function autoTranslateCategoryName(rawName: string): { id: string; en: st
 }
 
 export function getCategoryName(
-  cat: { id?: string; name?: string; translations?: { id?: string; en?: string } } | string | null | undefined,
-  lang: Language
+  cat: { id?: string; name?: string; type?: TransactionType; translations?: { id?: string; en?: string } } | string | null | undefined,
+  lang: Language,
+  fallbackType?: TransactionType
 ): string {
-  if (!cat) return lang === 'en' ? 'General' : 'Umum';
+  const isIncome = (typeof cat === 'object' && cat?.type === 'income') || fallbackType === 'income';
+  const defaultLabel = isIncome ? (lang === 'en' ? 'Income' : 'Pemasukan') : (lang === 'en' ? 'Expense' : 'Pengeluaran');
+
+  if (!cat) return defaultLabel;
 
   if (typeof cat === 'string') {
     if (DEFAULT_CATEGORY_TRANSLATIONS[cat]) {
@@ -699,7 +703,7 @@ export function getCategoryName(
     if (CATEGORY_NAME_LOOKUP[key]) {
       return CATEGORY_NAME_LOOKUP[key][lang];
     }
-    return cat || (lang === 'en' ? 'General' : 'Umum');
+    return cat || defaultLabel;
   }
 
   // Check explicitly saved custom translations on category object
@@ -718,5 +722,5 @@ export function getCategoryName(
     }
   }
 
-  return cat.name || (lang === 'en' ? 'General' : 'Umum');
+  return cat.name || defaultLabel;
 }

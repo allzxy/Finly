@@ -41,7 +41,7 @@ interface FinanceContextValue extends FinanceState {
   exportExcelBuffer: () => Uint8Array;
   importExcelBuffer: (buffer: ArrayBuffer) => boolean;
   resetAllData: () => void;
-  tCategory: (cat: Category | string | null | undefined) => string;
+  tCategory: (cat: Category | string | null | undefined, fallbackType?: TransactionType) => string;
 }
 
 const STORAGE_KEY = 'finly-data-v1';
@@ -219,7 +219,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const addTransaction = useCallback((tTx: Omit<Transaction, 'id'>) => {
     setState((s) => {
-      const tx: Transaction = { ...tTx, id: uid('t') };
+      let targetWId = tTx.walletId;
+      const validWallet = s.wallets.find((w) => w.id === targetWId && w.type !== 'savings') || s.wallets.find((w) => w.type !== 'savings') || s.wallets[0];
+      if (validWallet) {
+        targetWId = validWallet.id;
+      }
+      const tx: Transaction = { ...tTx, walletId: targetWId, id: uid('t') };
       const wallets = s.wallets.map((w) =>
         w.id === tx.walletId
           ? { ...w, balance: w.balance + (tx.type === 'income' ? tx.amount : -tx.amount) }
@@ -357,6 +362,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           walletId: fromWalletId,
           type: 'expense',
           amount,
+          linkedWalletId: toWalletId,
         };
         const inTx: Transaction = {
           id: uid('t'),
@@ -367,6 +373,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           walletId: toWalletId,
           type: 'income',
           amount,
+          linkedWalletId: fromWalletId,
         };
 
         const wallets = s.wallets.map((w) => {
@@ -559,13 +566,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const tCategory = useCallback(
-    (cat: Category | string | null | undefined) => {
-      if (!cat) return language === 'en' ? 'General' : 'Umum';
+    (cat: Category | string | null | undefined, fallbackType?: TransactionType) => {
       if (typeof cat === 'string') {
         const found = state.categories.find((c) => c.id === cat) || DEFAULT_CATEGORIES.find((c) => c.id === cat);
-        return getCategoryName(found || { id: cat, name: cat }, language);
+        return getCategoryName(found || { id: cat, name: cat }, language, fallbackType);
       }
-      return getCategoryName(cat, language);
+      return getCategoryName(cat, language, fallbackType);
     },
     [state.categories, language]
   );

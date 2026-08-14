@@ -4,15 +4,22 @@ import DatePickerModal from './DatePickerModal';
 import { useLanguage } from '../context/LanguageContext';
 
 function formatDisplay(value: string, placeholder: string, locale: string) {
-  if (!value) return placeholder;
-  const [y, m, d] = value.split('-').map(Number);
-  if (!y || !m || !d) return placeholder;
-  const date = new Date(y, m - 1, d);
-  const weekday = date.toLocaleDateString(locale, { weekday: 'long' });
-  const day = date.getDate();
-  const month = date.toLocaleDateString(locale, { month: 'long' });
-  const year = date.getFullYear();
-  return `${weekday}, ${day} ${month} ${year}`;
+  try {
+    if (!value) return placeholder;
+    const parts = value.split('-').map(Number);
+    if (parts.length < 3) return placeholder;
+    const [y, m, d] = parts;
+    if (!y || !m || !d) return placeholder;
+    const date = new Date(y, m - 1, d);
+    if (isNaN(date.getTime())) return placeholder;
+    const weekday = date.toLocaleDateString(locale || 'id-ID', { weekday: 'long' });
+    const day = date.getDate();
+    const month = date.toLocaleDateString(locale || 'id-ID', { month: 'long' });
+    const year = date.getFullYear();
+    return `${weekday}, ${day} ${month} ${year}`;
+  } catch {
+    return value || placeholder;
+  }
 }
 
 interface Props {

@@ -22,7 +22,7 @@ interface Props {
 }
 
 export default function TransactionList({ transactions, preview = false }: Props) {
-  const { categories, currency, deleteTransaction, clearAllTransactions, toDisplay, tCategory } = useFinance();
+  const { categories, wallets, currency, deleteTransaction, clearAllTransactions, toDisplay, tCategory } = useFinance();
   const { t, locale } = useLanguage();
 
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -41,7 +41,18 @@ export default function TransactionList({ transactions, preview = false }: Props
     });
   }, [transactions, filters, preview]);
 
-  const sortedAll = [...filtered].sort((a, b) => (a.date < b.date ? 1 : -1));
+  const sortedAll = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      if (a.date !== b.date) {
+        return b.date.localeCompare(a.date);
+      }
+      if (a.time && b.time && a.time !== b.time) {
+        return b.time.localeCompare(a.time);
+      }
+      return b.id.localeCompare(a.id);
+    });
+  }, [filtered]);
+
   const sorted = preview ? sortedAll.slice(0, 5) : sortedAll;
 
   const activeChips = useMemo(() => {
@@ -92,8 +103,38 @@ export default function TransactionList({ transactions, preview = false }: Props
           {sorted.map((tx) => {
             const cat = categories.find((c) => c.id === tx.categoryId);
             const Icon = cat?.icon ? CATEGORY_ICONS[cat.icon] : (tx.type === 'income' ? ArrowDownToLine : ArrowUpFromLine);
-            const dateObj = new Date(tx.date + 'T00:00:00');
-            const categoryLabel = tCategory(tx.categoryId);
+            let dateStr = tx.date;
+            try {
+              const d = new Date((tx.date || new Date().toISOString().slice(0, 10)) + 'T00:00:00');
+              if (!isNaN(d.getTime())) {
+                dateStr = d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+              }
+            } catch {
+              dateStr = tx.date;
+            }
+
+            const targetWId = tx.type === 'income' ? tx.walletId : tx.linkedWalletId;
+            const isSavingsTarget = !!targetWId && wallets.some((w) => w.id === targetWId && w.type === 'savings');
+            let categoryLabel = tCategory(tx.categoryId, tx.type);
+
+            if (tx.linkedWalletId) {
+              if (isSavingsTarget) {
+                categoryLabel = tCategory('c-topup-in', tx.type);
+              } else {
+                const descLower = (tx.description || '').toLowerCase();
+                const isAutoDesc = descLower.startsWith('transfer ke') || descLower.startsWith('transfer dari') || descLower.startsWith('transfer to') || descLower.startsWith('transfer from');
+
+                if (isAutoDesc) {
+                  categoryLabel = 'Transfer';
+                } else if (tx.type === 'income') {
+                  const sourceWName = (tx.linkedWalletId && wallets.find((w) => w.id === tx.linkedWalletId)?.name) || (locale.startsWith('id') ? 'Dompet' : 'Wallet');
+                  categoryLabel = locale.startsWith('id') ? `Transfer dari ${sourceWName}` : `Transfer from ${sourceWName}`;
+                } else {
+                  const targetWName = (tx.linkedWalletId && wallets.find((w) => w.id === tx.linkedWalletId)?.name) || (locale.startsWith('id') ? 'Dompet' : 'Wallet');
+                  categoryLabel = locale.startsWith('id') ? `Transfer ke ${targetWName}` : `Transfer to ${targetWName}`;
+                }
+              }
+            }
             const iconBgColor = cat?.color ? `${cat.color}20` : (tx.type === 'income' ? 'var(--color-primary-soft)' : 'var(--color-warn-soft)');
             const iconTextColor = cat?.color ?? (tx.type === 'income' ? 'var(--color-primary)' : 'var(--color-warn)');
             return (
@@ -102,7 +143,7 @@ export default function TransactionList({ transactions, preview = false }: Props
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-medium text-[var(--color-ink)] sm:text-sm">{tx.description}</p>
                   <p className="truncate text-[11px] text-[var(--color-muted)] sm:text-xs">
-                    {categoryLabel} · {dateObj.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}
+                    {categoryLabel} · {dateStr}
                     {tx.time ? ` • ${tx.time}` : ''}
                   </p>
                 </div>
