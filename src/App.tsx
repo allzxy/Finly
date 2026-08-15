@@ -19,7 +19,7 @@ function AppShell() {
     <div className="min-h-screen bg-[var(--color-bg)] overflow-x-hidden">
       <FloatingNavbar />
 
-      <main className="w-full px-4 pt-20 pb-24 md:pt-26 md:pb-12 sm:px-6 lg:px-8">
+      <main className="w-full max-w-7xl mx-auto px-3 pt-18 pb-24 sm:px-6 lg:px-8 lg:pt-24 lg:pb-12">
         <PageTransition>
           <Routes>
             <Route path="/" element={<Dashboard />} />

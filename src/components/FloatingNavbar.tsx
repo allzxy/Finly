@@ -64,17 +64,17 @@ export default function FloatingNavbar() {
         }}
       />
 
-      {/* 0B. AMBIENT GRADIENT-MASKED BLUR (NAVBAR TOP ZONE - MOBILE ONLY) */}
+      {/* 0B. AMBIENT GRADIENT-MASKED BLUR (NAVBAR TOP ZONE - MOBILE & TABLET ONLY) */}
       <div 
-        className="fixed bottom-0 inset-x-0 z-30 pointer-events-none h-24 md:hidden bg-gradient-to-t from-[var(--color-bg)]/90 via-[var(--color-bg)]/40 to-transparent backdrop-blur-md transition-all duration-300"
+        className="fixed bottom-0 inset-x-0 z-30 pointer-events-none h-24 lg:hidden bg-gradient-to-t from-[var(--color-bg)]/90 via-[var(--color-bg)]/40 to-transparent backdrop-blur-md transition-all duration-300"
         style={{
           maskImage: 'linear-gradient(to top, black 50%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to top, black 50%, transparent 100%)',
         }}
       />
 
-      {/* 1. DESKTOP & TABLET FLOATING NAVBAR (Top Floating Pill Bar) */}
-      <header className="glass-pill fixed top-4 left-1/2 z-40 hidden -translate-x-1/2 md:flex items-center justify-between gap-4 w-[calc(100%-2rem)] rounded-full border border-[var(--color-border)]/80 px-4 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] transition-all duration-300">
+      {/* 1. DESKTOP FLOATING NAVBAR (Top Floating Pill Bar) */}
+      <header className="glass-pill fixed top-4 left-1/2 z-40 hidden -translate-x-1/2 lg:flex items-center justify-between gap-4 w-[calc(100%-3rem)] max-w-4xl rounded-full border border-[var(--color-border)]/80 px-4 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] transition-all duration-300">
         {/* Brand Logo */}
         <NavLink to="/" className="flex items-center gap-2.5 shrink-0 pl-1 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shadow-sm transition transform group-hover:scale-105">
@@ -155,8 +155,8 @@ export default function FloatingNavbar() {
         </div>
       </header>
 
-      {/* 2. MOBILE FLOATING TOP HEADER */}
-      <header className="glass-panel fixed top-3 left-1/2 z-40 flex md:hidden items-center justify-between gap-2 w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl border border-[var(--color-border)]/80 px-3.5 py-2 shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
+      {/* 2. MOBILE & TABLET FLOATING TOP HEADER */}
+      <header className="glass-panel fixed top-3 left-1/2 z-40 flex lg:hidden items-center justify-between gap-2 w-[calc(100%-1.5rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-[var(--color-border)]/80 px-3.5 py-2 shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
         <NavLink to="/" className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden shadow-sm">
             <PocketIcon size={32} />
@@ -169,8 +169,8 @@ export default function FloatingNavbar() {
         </div>
       </header>
 
-      {/* 3. MOBILE FLOATING BOTTOM NAVBAR (Adaptive for all phone screen sizes) */}
-      <nav className="glass-pill fixed bottom-3 left-1/2 z-40 flex md:hidden items-center justify-between w-[calc(100%-1rem)] max-w-[440px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-2 sm:px-3.5 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
+      {/* 3. MOBILE & TABLET FLOATING BOTTOM NAVBAR */}
+      <nav className="glass-pill fixed bottom-3 left-1/2 z-40 flex lg:hidden items-center justify-between w-[calc(100%-1rem)] max-w-[440px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-2 sm:px-3.5 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
         {/* Kolom 1 & 2: Dasbor & Dompet */}
         {PRIMARY_NAV_ITEMS.slice(0, 2).map((item) => (
           <NavLink

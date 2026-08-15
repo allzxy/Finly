@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { Category, Transaction, Wallet } from '../lib/types';
+import type { Category, Transaction, TransactionType, Wallet } from '../lib/types';
 import { CURRENCIES, BASE_CURRENCY_CODE, convertAmount, EXCHANGE_RATES } from '../lib/currencies';
 import { useLiveRates, type LiveRatesState } from '../lib/useLiveRates';
 import { useLanguage } from './LanguageContext';
@@ -265,6 +265,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     setState((s) => {
       const tx = s.transactions.find((tr) => tr.id === id);
       if (!tx) return s;
+
+      // Cari pasangan transfer jika transaksi ini adalah transfer
+      let twinId: string | null = null;
+      if (tx.linkedWalletId) {
+        const twin = s.transactions.find(
+          (tr) =>
+            tr.id !== id &&
+            tr.date === tx.date &&
+            tr.amount === tx.amount &&
+            tr.walletId === tx.linkedWalletId &&
+            tr.linkedWalletId === tx.walletId
+        );
+        if (twin) twinId = twin.id;
+      }
       
       const wallets = s.wallets.map((w) => {
         let bal = w.balance;
@@ -280,21 +294,14 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         return { ...w, balance: Math.max(0, bal) };
       });
 
-      return { ...s, transactions: s.transactions.filter((tr) => tr.id !== id), wallets };
+      return { ...s, transactions: s.transactions.filter((tr) => tr.id !== id && tr.id !== twinId), wallets };
     });
   }, []);
 
   const clearAllTransactions = useCallback(() => {
     setState((s) => {
-      const wallets = s.wallets.map((w) => {
-        const delta = s.transactions
-          .filter((tr) => tr.walletId === w.id)
-          .reduce((sum, tr) => sum + (tr.type === 'income' ? tr.amount : -tr.amount), 0);
-
-        // Jamin saldo tidak pernah minus saat reset total riwayat
-        const newBal = Math.max(0, w.balance - delta);
-        return { ...w, balance: newBal };
-      });
+      // Pertahankan dompet, kategori, dan tabungan, namun reset saldo/nominalnya kembali ke 0
+      const wallets = s.wallets.map((w) => ({ ...w, balance: 0 }));
       return { ...s, transactions: [], wallets };
     });
   }, []);
@@ -454,19 +461,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const deleteCategory = useCallback((id: string) => {
     setState((s) => {
-      const targetCat = s.categories.find((c) => c.id === id);
-      if (!targetCat) return s;
-
-      const sameTypeFallback = s.categories.find((c) => c.id !== id && c.type === targetCat.type && !c.system);
-      const anyFallback = s.categories.find((c) => c.id !== id && !c.system) ?? s.categories.find((c) => c.id !== id);
-      const fallbackId = sameTypeFallback?.id ?? anyFallback?.id ?? '';
-
       return {
         ...s,
         categories: s.categories.filter((c) => c.id !== id),
-        transactions: s.transactions.map((tr) =>
-          tr.categoryId === id ? { ...tr, categoryId: fallbackId } : tr
-        ),
+        transactions: s.transactions.filter((tr) => tr.categoryId !== id),
       };
     });
   }, []);

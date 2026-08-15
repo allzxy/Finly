@@ -1,3 +1,5 @@
+import type { TransactionType } from './types';
+
 export type Language = 'id' | 'en';
 
 export const LANGUAGE_LABELS: Record<Language, { label: string; native: string; locale: string }> = {

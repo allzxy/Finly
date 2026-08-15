@@ -18,9 +18,8 @@ export default function Wallets() {
   const [funding, setFunding] = useState<Wallet | null>(null);
   const [deleting, setDeleting] = useState<Wallet | null>(null);
 
-  // Hanya ambil dompet asli (bukan tabungan)
-  const realWallets = wallets.filter((w) => w.type !== 'savings');
-  const totalBalance = toDisplay(realWallets.reduce((s, w) => s + w.balance, 0));
+  // Tampilkan seluruh dompet termasuk tabungan yang dibuat pengguna
+  const totalBalance = toDisplay(wallets.reduce((s, w) => s + w.balance, 0));
 
   const openCreate = () => {
     setEditing(null);
@@ -54,7 +53,7 @@ export default function Wallets() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 sm:gap-4">
-        {realWallets.map((w) => (
+        {wallets.map((w) => (
           <WalletCard key={w.id} wallet={w} wallets={wallets} onDelete={() => setDeleting(w)} onEdit={openEdit} onFund={setFunding} />
         ))}
       </div>

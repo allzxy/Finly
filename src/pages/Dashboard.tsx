@@ -88,9 +88,9 @@ export default function Dashboard() {
       />
 
 
-      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
-        <div className="flex flex-col lg:col-span-7"><DailyChart transactions={monthTx} month={selectedMonth} selectedDate={selectedDate} onSelectDate={setSelectedDate} /></div>
-        <div className="flex flex-col lg:col-span-5"><CategoryBreakdown transactions={scopedTx} categories={categories} onManage={() => navigate('/categories')} /></div>
+      <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-12">
+        <div className="flex flex-col xl:col-span-7 min-w-0 w-full"><DailyChart transactions={monthTx} month={selectedMonth} selectedDate={selectedDate} onSelectDate={setSelectedDate} /></div>
+        <div className="flex flex-col xl:col-span-5 min-w-0 w-full"><CategoryBreakdown transactions={scopedTx} categories={categories} onManage={() => navigate('/categories')} /></div>
       </div>
       
       {/* TransactionList menerima recentTx untuk menampilkan riwayat transaksi terbaru */}
