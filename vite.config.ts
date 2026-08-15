@@ -14,5 +14,10 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
     define: processEnvDefines,
+    server: {
+      watch: {
+        ignored: ['**/screenshots/**', '**/dist/**', '**/*.tmp', '**/*.~tmp'],
+      },
+    },
   };
 });
