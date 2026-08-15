@@ -77,7 +77,7 @@ export default function FloatingNavbar() {
       <header className="glass-pill fixed top-4 left-1/2 z-40 hidden -translate-x-1/2 lg:flex items-center justify-between gap-4 w-[calc(100%-3rem)] max-w-4xl rounded-full border border-[var(--color-border)]/80 px-4 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] transition-all duration-300">
         {/* Brand Logo */}
         <NavLink to="/" className="flex items-center gap-2.5 shrink-0 pl-1 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shadow-sm transition transform group-hover:scale-105">
+          <div className="flex h-9 w-9 items-center justify-center shrink-0 transition transform group-hover:scale-105">
             <PocketIcon size={36} />
           </div>
           <span className="font-bold tracking-tight text-lg text-[var(--color-ink)]">Finly</span>
@@ -158,7 +158,7 @@ export default function FloatingNavbar() {
       {/* 2. MOBILE & TABLET FLOATING TOP HEADER */}
       <header className="glass-panel fixed top-3 left-1/2 z-40 flex lg:hidden items-center justify-between gap-2 w-[calc(100%-1.5rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-[var(--color-border)]/80 px-3.5 py-2 shadow-[0_8px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
         <NavLink to="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden shadow-sm">
+          <div className="flex h-8 w-8 items-center justify-center shrink-0">
             <PocketIcon size={32} />
           </div>
           <span className="font-bold tracking-tight text-base text-[var(--color-ink)]">Finly</span>

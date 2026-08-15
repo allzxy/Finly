@@ -20,7 +20,7 @@ export default function AboutModal({ open, onClose }: { open: boolean; onClose: 
     <Modal open={open} onClose={onClose} title={t('about.modalTitle')}>
       <div className="flex flex-col gap-5">
         <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-accent-soft)] px-4 py-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl overflow-hidden shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center">
             <PocketIcon size={48} />
           </div>
           <div className="min-w-0">
