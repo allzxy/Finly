@@ -479,17 +479,18 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const exportData = useCallback(() => {
     return JSON.stringify(
       {
-        version: 1,
+        version: '2.0',
         exportedAt: new Date().toISOString(),
         wallets: state.wallets,
         categories: state.categories,
         transactions: state.transactions,
         currencyCode: state.currencyCode,
+        language: language,
       },
       null,
       2
     );
-  }, [state.wallets, state.categories, state.transactions, state.currencyCode]);
+  }, [state.wallets, state.categories, state.transactions, state.currencyCode, language]);
 
   const importData = useCallback((jsonStr: string): boolean => {
     try {
@@ -499,11 +500,16 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
+      if (parsed.language === 'id' || parsed.language === 'en') {
+        setLanguage(parsed.language);
+      }
+
       const categories = sanitizeCategories(parsed.categories);
       const transactions = sanitizeTransactions(parsed.transactions, categories);
+      const wallets = reconcileWalletBalances(parsed.wallets);
 
       setState({
-        wallets: parsed.wallets,
+        wallets,
         categories,
         transactions,
         currencyCode: typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR',
@@ -513,33 +519,17 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     } catch {
       return false;
     }
-  }, []);
+  }, [setLanguage]);
 
   const exportExcelBuffer = useCallback(() => {
-    const isZeroDecimal = state.currencyCode === 'IDR' || state.currencyCode === 'JPY';
-    const cleanAmount = (val: number) => {
-      const disp = toDisplay(val);
-      return isZeroDecimal ? Math.round(disp) : Math.round(disp * 100) / 100;
-    };
-
     return exportToExcelBuffer({
-      wallets: state.wallets.map((w) => ({
-        ...w,
-        balance: cleanAmount(w.balance),
-        goalAmount: typeof w.goalAmount === 'number' ? cleanAmount(w.goalAmount) : undefined,
-      })),
-      categories: state.categories.map((c) => ({
-        ...c,
-        monthlyLimit: typeof c.monthlyLimit === 'number' ? cleanAmount(c.monthlyLimit) : undefined,
-      })),
-      transactions: state.transactions.map((t) => ({
-        ...t,
-        amount: cleanAmount(t.amount),
-      })),
+      wallets: state.wallets,
+      categories: state.categories,
+      transactions: state.transactions,
       currencyCode: state.currencyCode,
       language: language,
     });
-  }, [state.wallets, state.categories, state.transactions, state.currencyCode, language, toDisplay]);
+  }, [state.wallets, state.categories, state.transactions, state.currencyCode, language]);
 
   const importExcelBuffer = useCallback(
     (buffer: ArrayBuffer): boolean => {
@@ -552,9 +542,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
       const categories = sanitizeCategories(data.categories);
       const transactions = sanitizeTransactions(data.transactions, categories);
+      const wallets = reconcileWalletBalances(data.wallets);
 
       setState({
-        wallets: data.wallets,
+        wallets,
         categories,
         transactions,
         currencyCode: data.currencyCode || 'IDR',

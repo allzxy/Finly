@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import type { Wallet, Category, Transaction } from './types';
 import { DEFAULT_CATEGORIES } from './seed';
-import { CURRENCIES } from './currencies';
+import { CURRENCIES, BASE_CURRENCY_CODE, convertAmount, EXCHANGE_RATES } from './currencies';
 import { getCategoryName, type Language } from './i18n';
 
 export interface BackupData {
@@ -11,6 +11,8 @@ export interface BackupData {
   currencyCode: string;
   language?: string;
   theme?: string;
+  exportedAt?: string;
+  version?: string;
 }
 
 export function formatCurrencyDisplay(amount: number, currencyCode: string): string {
@@ -76,56 +78,60 @@ function autofitColumns(sheet: XLSX.WorkSheet, minWidth = 14) {
 export function exportToExcelBuffer(data: BackupData): Uint8Array {
   const wb = XLSX.utils.book_new();
   const isEn = data.language === 'en';
-
   const activeLang = (data.language as Language) || 'id';
+
+  const toDisp = (val: number) => {
+    const converted = convertAmount(val, BASE_CURRENCY_CODE, data.currencyCode, EXCHANGE_RATES);
+    const isZeroDecimal = data.currencyCode === 'IDR' || data.currencyCode === 'JPY';
+    return isZeroDecimal ? Math.round(converted) : Math.round(converted * 100) / 100;
+  };
+
   const categoryLookup = new Map<string, string>();
-  // Pre-populate lookup with default system & predefined categories localized
   DEFAULT_CATEGORIES.forEach((c) => categoryLookup.set(c.id, getCategoryName(c, activeLang)));
   data.categories.forEach((c) => categoryLookup.set(c.id, getCategoryName(c, activeLang)));
 
   const walletLookup = new Map<string, string>();
   data.wallets.forEach((w) => walletLookup.set(w.id, w.name));
 
-  // Calculate Summary Totals
-  const totalBalance = data.wallets
+  // Summary Totals (in display currency)
+  const totalBalanceBase = data.wallets
     .filter((w) => w.type !== 'savings')
     .reduce((sum, w) => sum + (w.balance || 0), 0);
+  const totalBalance = toDisp(totalBalanceBase);
 
   const savingsWallets = data.wallets.filter((w) => w.type === 'savings');
-  const totalSavings = savingsWallets.reduce((sum, w) => sum + (w.balance || 0), 0);
-  const totalSavingsGoal = savingsWallets.reduce((sum, w) => sum + (w.goalAmount || 0), 0);
+  const totalSavings = toDisp(savingsWallets.reduce((sum, w) => sum + (w.balance || 0), 0));
+  const totalSavingsGoal = toDisp(savingsWallets.reduce((sum, w) => sum + (w.goalAmount || 0), 0));
   const overallSavingsPct = totalSavingsGoal > 0 ? Math.min(100, Math.round((totalSavings / totalSavingsGoal) * 100)) : 0;
 
-  const totalIncome = data.transactions
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
+  const totalIncome = toDisp(
+    data.transactions.filter((t) => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0)
+  );
+  const totalExpense = toDisp(
+    data.transactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0)
+  );
+  const totalCategoryBudgetLimit = toDisp(
+    data.categories.filter((c) => c.type === 'expense' && c.monthlyLimit).reduce((sum, c) => sum + (c.monthlyLimit || 0), 0)
+  );
 
-  const totalExpense = data.transactions
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-  const totalCategoryBudgetLimit = data.categories
-    .filter((c) => c.type === 'expense' && typeof c.monthlyLimit === 'number')
-    .reduce((sum, c) => sum + (c.monthlyLimit || 0), 0);
-
-  // Calculate monthly spending per category for current month
-  const nowMonthKey = new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const categorySpentMap = new Map<string, number>();
-
   data.transactions
-    .filter((t) => !t.linkedWalletId && t.date && t.date.slice(0, 7) === nowMonthKey)
+    .filter((t) => t.date.startsWith(currentMonthPrefix))
     .forEach((t) => {
-      categorySpentMap.set(t.categoryId, (categorySpentMap.get(t.categoryId) || 0) + (t.amount || 0));
+      const cur = categorySpentMap.get(t.categoryId) || 0;
+      categorySpentMap.set(t.categoryId, cur + toDisp(t.amount || 0));
     });
 
-  // 1. Sheet Ringkasan (Dinamis Sesuai Bahasa Aplikasi: ID / EN)
+  // 1. Sheet Ringkasan Eksekutif
   const summaryRows = isEn
     ? [
-        { Description: 'Backup Created Date', Value: new Date().toLocaleString('en-US') },
-        { Description: 'Total Main Balance (Cash + Bank + E-Wallet)', Value: formatCurrencyDisplay(totalBalance, data.currencyCode) },
-        { Description: 'Total Accumulated Savings', Value: formatCurrencyDisplay(totalSavings, data.currencyCode) },
-        { Description: 'Total Savings Goal', Value: formatCurrencyDisplay(totalSavingsGoal, data.currencyCode) },
-        { Description: 'Overall Savings Progress', Value: `${overallSavingsPct}%` },
+        { Description: 'Backup Generated At', Value: new Date().toLocaleString('en-US') },
+        { Description: 'Total Main Balance (Cash + Bank + Digital)', Value: formatCurrencyDisplay(totalBalance, data.currencyCode) },
+        { Description: 'Total Savings Accumulated', Value: formatCurrencyDisplay(totalSavings, data.currencyCode) },
+        { Description: 'Total Savings Goals Target', Value: formatCurrencyDisplay(totalSavingsGoal, data.currencyCode) },
+        { Description: 'Overall Savings Progress Rate', Value: `${overallSavingsPct}%` },
         { Description: 'Total Accumulated Income', Value: formatCurrencyDisplay(totalIncome, data.currencyCode) },
         { Description: 'Total Accumulated Expense', Value: formatCurrencyDisplay(totalExpense, data.currencyCode) },
         { Description: 'Total Monthly Expense Budget Limit', Value: formatCurrencyDisplay(totalCategoryBudgetLimit, data.currencyCode) },
@@ -134,7 +140,7 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
         { Description: 'Total Categories', Value: data.categories.length },
         { Description: 'Total Transaction History Records', Value: data.transactions.length },
         { Description: 'Base Currency', Value: data.currencyCode },
-        { Description: 'Backup Version', Value: '1.8' },
+        { Description: 'Backup Version', Value: '2.0 (Lossless Dual-Layer)' },
       ]
     : [
         { Keterangan: 'Waktu Cadangan Dibuat', Nilai: new Date().toLocaleString('id-ID') },
@@ -146,19 +152,19 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
         { Keterangan: 'Total Akumulasi Seluruh Pengeluaran', Nilai: formatCurrencyDisplay(totalExpense, data.currencyCode) },
         { Keterangan: 'Total Batas Anggaran Pengeluaran Bulanan', Nilai: formatCurrencyDisplay(totalCategoryBudgetLimit, data.currencyCode) },
         { Keterangan: 'Jumlah Dompet / Akun Keuangan', Nilai: data.wallets.length },
-        { Keterangan: 'Jumlah Target Tabungan Active', Nilai: savingsWallets.length },
+        { Keterangan: 'Jumlah Target Tabungan Aktif', Nilai: savingsWallets.length },
         { Keterangan: 'Jumlah Kategori Keuangan', Nilai: data.categories.length },
         { Keterangan: 'Jumlah Total Catatan Transaksi', Nilai: data.transactions.length },
         { Keterangan: 'Mata Uang Utama Aplikasi', Nilai: data.currencyCode },
-        { Keterangan: 'Versi Format Cadangan', Nilai: '1.8' },
+        { Keterangan: 'Versi Format Cadangan', Nilai: '2.0 (Lossless Dual-Layer)' },
       ];
   const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
 
-  // 2. Sheet Transaksi (Dengan Kategori fallback & Pemisah Dompet Sumber/Tujuan)
+  // 2. Sheet Riwayat Transaksi
   const txRows = data.transactions.map((t) => {
     const txTypeLabel = t.type === 'income' ? (isEn ? 'Income' : 'Pemasukan') : (isEn ? 'Expense' : 'Pengeluaran');
+    const dispAmount = toDisp(t.amount);
 
-    // Smart Category Fallback Resolution
     let resolvedCategory = categoryLookup.get(t.categoryId);
     const isSavingsTarget = data.wallets.some((w) => w.id === (t.type === 'income' ? t.walletId : t.linkedWalletId) && w.type === 'savings');
 
@@ -180,11 +186,9 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
       }
     }
 
-    // Smart Wallet & Destination Resolution (Clear source ➔ destination flow)
     let sourceWalletName = walletLookup.get(t.walletId) || t.walletId || (isEn ? 'Wallet' : 'Dompet');
     let targetWalletName = t.linkedWalletId ? (walletLookup.get(t.linkedWalletId) || t.linkedWalletId) : '';
 
-    // If income transfer or savings deposit, money comes from t.linkedWalletId into t.walletId
     if (t.type === 'income' && t.linkedWalletId) {
       sourceWalletName = walletLookup.get(t.linkedWalletId) || t.linkedWalletId;
       targetWalletName = walletLookup.get(t.walletId) || t.walletId;
@@ -197,8 +201,8 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
           'Transaction Date': t.date,
           'Time (HH:mm)': t.time ?? '',
           'Transaction Type': txTypeLabel,
-          'Formatted Amount': formatCurrencyDisplay(t.amount, data.currencyCode),
-          Amount: t.amount,
+          'Formatted Amount': formatCurrencyDisplay(dispAmount, data.currencyCode),
+          Amount: dispAmount,
           Category: resolvedCategory,
           'Wallet / Account': walletAccountDisplay,
           'Destination Wallet': targetWalletName || '-',
@@ -207,13 +211,14 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
           'Category Code': t.categoryId || '',
           'Wallet Code': t.walletId,
           'Linked Wallet Code': t.linkedWalletId ?? '',
+          'Base Exact Amount': t.amount,
         }
       : {
           'Tanggal Transaksi': t.date,
           'Waktu (Jam:Menit)': t.time ?? '',
           'Jenis Transaksi': txTypeLabel,
-          'Nominal Transaksi': formatCurrencyDisplay(t.amount, data.currencyCode),
-          'Angka Nominal': t.amount,
+          'Nominal Transaksi': formatCurrencyDisplay(dispAmount, data.currencyCode),
+          'Angka Nominal': dispAmount,
           Kategori: resolvedCategory,
           'Dompet / Akun': walletAccountDisplay,
           'Dompet Tujuan': targetWalletName || '-',
@@ -222,62 +227,68 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
           'Kode Kategori': t.categoryId || '',
           'Kode Dompet': t.walletId,
           'Kode Dompet Sumber': t.linkedWalletId ?? '',
+          'Nominal Baku (Base)': t.amount,
         };
   });
-
   const txSheet = XLSX.utils.json_to_sheet(txRows);
 
-  // 3. Sheet Dompet & Tabungan (Bilingual: ID / EN)
+  // 3. Sheet Dompet & Tabungan
   const walletRows = data.wallets.map((w) => {
     const isSavings = w.type === 'savings';
-    const goal = w.goalAmount || 0;
-    const pct = isSavings && goal > 0 ? Math.min(100, Math.round(((w.balance || 0) / goal) * 100)) : 0;
-    const pctLabel = isSavings && goal > 0 ? `${pct}%` : '-';
+    const dispBalance = toDisp(w.balance);
+    const dispGoal = typeof w.goalAmount === 'number' ? toDisp(w.goalAmount) : 0;
+    const pct = isSavings && dispGoal > 0 ? Math.min(100, Math.round((dispBalance / dispGoal) * 100)) : 0;
+    const pctLabel = isSavings && dispGoal > 0 ? `${pct}%` : '-';
 
     let walletTypeLabel = 'Kas Tunai';
     if (isEn) {
       walletTypeLabel = isSavings ? 'Savings Goal' : w.type === 'cash' ? 'Cash' : w.type === 'bank' ? 'Bank Account' : 'Digital Wallet';
     } else {
-      walletTypeLabel = isSavings ? 'Tabungan Impian' : w.type === 'cash' ? 'Kas Tunai' : w.type === 'bank' ? 'Rekening Bank' : 'E-Wallet Digital';
+      walletTypeLabel = isSavings ? 'Target Tabungan' : w.type === 'cash' ? 'Kas Tunai' : w.type === 'bank' ? 'Akun Bank' : 'Dompet Digital (E-Wallet)';
     }
 
     return isEn
       ? {
           'Wallet / Savings Name': w.name,
           'Account Type': walletTypeLabel,
-          'Formatted Balance': formatCurrencyDisplay(w.balance, data.currencyCode),
-          Balance: w.balance,
-          'Formatted Goal': goal > 0 ? formatCurrencyDisplay(goal, data.currencyCode) : '-',
-          'Goal Amount': goal,
+          'Current Balance': formatCurrencyDisplay(dispBalance, data.currencyCode),
+          Balance: dispBalance,
+          'Formatted Goal': dispGoal > 0 ? formatCurrencyDisplay(dispGoal, data.currencyCode) : '-',
+          'Goal Amount': dispGoal > 0 ? dispGoal : 0,
           'Savings Progress': pctLabel,
           'Progress Rate': pct,
           'Bank / Provider Name': w.institution ?? '',
           'Wallet Code': w.id,
           'Color Code': w.color,
           'Linked Wallet Code': w.linkedWalletId ?? '',
+          'Base Exact Balance': w.balance,
+          'Base Exact Goal': w.goalAmount ?? 0,
         }
       : {
           'Nama Dompet / Tabungan': w.name,
           'Jenis Akun': walletTypeLabel,
-          'Saldo Saat Ini': formatCurrencyDisplay(w.balance, data.currencyCode),
-          'Angka Saldo': w.balance,
-          'Target Tabungan': goal > 0 ? formatCurrencyDisplay(goal, data.currencyCode) : '-',
-          'Angka Target': goal,
+          'Saldo Saat Ini': formatCurrencyDisplay(dispBalance, data.currencyCode),
+          'Angka Saldo': dispBalance,
+          'Target Tabungan': dispGoal > 0 ? formatCurrencyDisplay(dispGoal, data.currencyCode) : '-',
+          'Angka Target': dispGoal > 0 ? dispGoal : 0,
           'Persentase Terkumpul': pctLabel,
           'Angka Persen': pct,
           'Nama Bank / Provider': w.institution ?? '',
           'Kode Dompet': w.id,
           'Kode Warna': w.color,
           'Kode Dompet Sumber': w.linkedWalletId ?? '',
+          'Saldo Baku (Base)': w.balance,
+          'Target Baku (Base)': w.goalAmount ?? 0,
         };
   });
   const walletSheet = XLSX.utils.json_to_sheet(walletRows);
 
-  // 4. Sheet Kategori (Bilingual: ID / EN + Total Transaksi Bulan Ini)
+  // 4. Sheet Kategori
   const categoryRows = data.categories.map((c) => {
     const catTypeLabel = c.type === 'income' ? (isEn ? 'Income' : 'Pemasukan') : (isEn ? 'Expense' : 'Pengeluaran');
     const spentThisMonth = categorySpentMap.get(c.id) || 0;
     const catNameLocalized = getCategoryName(c, activeLang);
+    const dispLimit = typeof c.monthlyLimit === 'number' ? toDisp(c.monthlyLimit) : 0;
 
     return isEn
       ? {
@@ -285,36 +296,44 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
           'Category Type': catTypeLabel,
           'Spent / Received This Month': formatCurrencyDisplay(spentThisMonth, data.currencyCode),
           'Raw Spent This Month': spentThisMonth,
-          'Monthly Budget Limit': c.monthlyLimit ? formatCurrencyDisplay(c.monthlyLimit, data.currencyCode) : '-',
-          'Raw Limit Amount': c.monthlyLimit ?? 0,
+          'Monthly Budget Limit': dispLimit > 0 ? formatCurrencyDisplay(dispLimit, data.currencyCode) : '-',
+          'Raw Limit Amount': dispLimit,
           'Icon Name': c.icon,
           'Color Code': c.color,
           'System Default': c.system ? 'Yes' : 'No',
           'Category Code': c.id,
+          'Base Exact Limit': c.monthlyLimit ?? 0,
+          'Original Name': c.name,
+          'Translation ID': c.translations?.id ?? '',
+          'Translation EN': c.translations?.en ?? '',
         }
       : {
           'Nama Kategori': catNameLocalized,
           'Jenis Kategori': catTypeLabel,
           'Pengeluaran / Pemasukan Bulan Ini': formatCurrencyDisplay(spentThisMonth, data.currencyCode),
           'Angka Bulan Ini': spentThisMonth,
-          'Batas Anggaran Bulanan': c.monthlyLimit ? formatCurrencyDisplay(c.monthlyLimit, data.currencyCode) : '-',
-          'Angka Batas Anggaran': c.monthlyLimit ?? 0,
+          'Batas Anggaran Bulanan': dispLimit > 0 ? formatCurrencyDisplay(dispLimit, data.currencyCode) : '-',
+          'Angka Batas Anggaran': dispLimit,
           'Nama Ikon': c.icon,
           'Kode Warna': c.color,
           'Kategori Bawaan Sistem': c.system ? 'Ya' : 'Tidak',
           'Kode Kategori': c.id,
+          'Batas Baku (Base)': c.monthlyLimit ?? 0,
+          'Nama Asli': c.name,
+          'Terjemahan ID': c.translations?.id ?? '',
+          'Terjemahan EN': c.translations?.en ?? '',
         };
   });
   const categorySheet = XLSX.utils.json_to_sheet(categoryRows);
 
-  // 5. Sheet Pengaturan (Bilingual: ID / EN)
+  // 5. Sheet Pengaturan
   const settingRows = isEn
     ? [
         {
           'Base Currency': data.currencyCode,
           'App Language': data.language || 'en',
           'Display Mode': data.theme || 'dark',
-          'Backup Version': '1.8',
+          'Backup Version': '2.0',
         },
       ]
     : [
@@ -322,17 +341,35 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
           'Mata Uang Utama': data.currencyCode,
           'Bahasa Aplikasi': data.language || 'id',
           'Mode Tampilan': data.theme || 'dark',
-          'Versi Cadangan': '1.8',
+          'Versi Cadangan': '2.0',
         },
       ];
   const settingSheet = XLSX.utils.json_to_sheet(settingRows);
 
-  // Apply cell number formatting (.z) so numeric cells format as currency in Excel
+  // 6. DEDICATED LOSSLESS RAW DATA SHEET (Layer 1: 100% Exact Bit-Level Preservation)
+  const rawMetaPayload = [
+    {
+      _KEY: 'FINLY_LOSSLESS_BACKUP_V2',
+      _EXPORTED_AT: new Date().toISOString(),
+      _PAYLOAD: JSON.stringify({
+        wallets: data.wallets,
+        categories: data.categories,
+        transactions: data.transactions,
+        currencyCode: data.currencyCode,
+        language: data.language,
+        theme: data.theme,
+        version: '2.0',
+      }),
+    },
+  ];
+  const rawMetaSheet = XLSX.utils.json_to_sheet(rawMetaPayload);
+
+  // Apply cell number formatting (.z)
   applyExcelFormats(txSheet, data.currencyCode);
   applyExcelFormats(walletSheet, data.currencyCode);
   applyExcelFormats(categorySheet, data.currencyCode);
 
-  // Auto-fit column widths for clear, readable columns in Excel
+  // Auto-fit column widths
   autofitColumns(summarySheet, 32);
   autofitColumns(txSheet, 18);
   autofitColumns(walletSheet, 16);
@@ -350,13 +387,14 @@ export function exportToExcelBuffer(data: BackupData): Uint8Array {
   XLSX.utils.book_append_sheet(wb, walletSheet, walletSheetName);
   XLSX.utils.book_append_sheet(wb, categorySheet, categorySheetName);
   XLSX.utils.book_append_sheet(wb, settingSheet, settingSheetName);
+  XLSX.utils.book_append_sheet(wb, rawMetaSheet, '_FINLY_RAW_DATA_');
 
   const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   return new Uint8Array(out);
 }
 
 function parseFlexibleNumber(val: unknown): number {
-  if (typeof val === 'number') return isNaN(val) ? 0 : Math.round(val * 100) / 100;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
   if (val === null || val === undefined) return 0;
   const str = String(val).trim();
   if (!str) return 0;
@@ -367,31 +405,31 @@ function parseFlexibleNumber(val: unknown): number {
   if (cleaned.includes('.') && cleaned.includes(',')) {
     const normalized = cleaned.replace(/\./g, '').replace(',', '.');
     const parsed = parseFloat(normalized);
-    return isNaN(parsed) ? 0 : Math.round(parsed * 100) / 100;
+    return isNaN(parsed) ? 0 : parsed;
   }
 
   if (cleaned.includes(',') && !cleaned.includes('.')) {
     const parts = cleaned.split(',');
     if (parts[parts.length - 1].length === 3) {
       const parsed = parseFloat(cleaned.replace(/,/g, ''));
-      return isNaN(parsed) ? 0 : Math.round(parsed * 100) / 100;
+      return isNaN(parsed) ? 0 : parsed;
     }
     const parsed = parseFloat(cleaned.replace(',', '.'));
-    return isNaN(parsed) ? 0 : Math.round(parsed * 100) / 100;
+    return isNaN(parsed) ? 0 : parsed;
   }
 
   if (cleaned.includes('.') && !cleaned.includes(',')) {
     const parts = cleaned.split('.');
     if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3 && parts[0].length >= 1)) {
       const parsed = parseFloat(cleaned.replace(/\./g, ''));
-      return isNaN(parsed) ? 0 : Math.round(parsed * 100) / 100;
+      return isNaN(parsed) ? 0 : parsed;
     }
   }
 
   const num = Number(cleaned);
-  if (!isNaN(num)) return Math.round(num * 100) / 100;
+  if (!isNaN(num)) return num;
   const fallback = parseFloat(cleaned);
-  return isNaN(fallback) ? 0 : Math.round(fallback * 100) / 100;
+  return isNaN(fallback) ? 0 : fallback;
 }
 
 function parseExcelDate(val: unknown): string {
@@ -451,6 +489,53 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
   try {
     const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
 
+    // 1. LAYER 1: FAST PATH FOR 100% BIT-EXACT RESTORATION (_FINLY_RAW_DATA_)
+    const rawSheet = wb.Sheets['_FINLY_RAW_DATA_'];
+    if (rawSheet) {
+      const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(rawSheet);
+      if (rawRows.length > 0 && rawRows[0]._PAYLOAD && typeof rawRows[0]._PAYLOAD === 'string') {
+        try {
+          const parsed = JSON.parse(rawRows[0]._PAYLOAD);
+          if (
+            parsed &&
+            Array.isArray(parsed.wallets) &&
+            Array.isArray(parsed.categories) &&
+            Array.isArray(parsed.transactions)
+          ) {
+            return {
+              wallets: parsed.wallets,
+              categories: parsed.categories,
+              transactions: parsed.transactions,
+              currencyCode: typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR',
+              language: typeof parsed.language === 'string' ? parsed.language : undefined,
+              theme: typeof parsed.theme === 'string' ? parsed.theme : undefined,
+              version: typeof parsed.version === 'string' ? parsed.version : '2.0',
+            };
+          }
+        } catch {
+          // Fallback to manual sheet parser below if raw JSON is corrupted
+        }
+      }
+    }
+
+    // 2. LAYER 2: INTELLECTUAL PARSER FOR MANUAL / MODIFIED / THIRD-PARTY EXCEL SHEETS
+    // Parse Pengaturan first to determine file currency
+    const settingSheetName = wb.SheetNames.find(
+      (s) => s.toLowerCase().includes('pengaturan') || s.toLowerCase().includes('setting')
+    );
+    const settingRows = settingSheetName ? XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[settingSheetName]) : [];
+    const currencyCode =
+      settingRows[0]?.['Mata Uang Utama'] || settingRows[0]?.['Base Currency'] || settingRows[0]?.MataUang || settingRows[0]?.currencyCode
+        ? String(settingRows[0]['Mata Uang Utama'] || settingRows[0]['Base Currency'] || settingRows[0].MataUang || settingRows[0].currencyCode)
+        : 'IDR';
+    const language = settingRows[0]?.['Bahasa Aplikasi'] || settingRows[0]?.['App Language'] || settingRows[0]?.Bahasa ? String(settingRows[0]['Bahasa Aplikasi'] || settingRows[0]['App Language'] || settingRows[0].Bahasa) : undefined;
+    const theme = settingRows[0]?.['Mode Tampilan'] || settingRows[0]?.['Display Mode'] || settingRows[0]?.Tema ? String(settingRows[0]['Mode Tampilan'] || settingRows[0]['Display Mode'] || settingRows[0].Tema) : undefined;
+
+    // Currency normalization helper for visual spreadsheets
+    const normalizeToBase = (val: number) => {
+      return convertAmount(val, currencyCode, BASE_CURRENCY_CODE, EXCHANGE_RATES);
+    };
+
     // Parse Dompet & Tabungan
     const walletSheetName = wb.SheetNames.find(
       (s) => s.toLowerCase().includes('dompet') || s.toLowerCase().includes('wallet') || s.toLowerCase().includes('tabungan') || s.toLowerCase().includes('savings')
@@ -466,12 +551,29 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
 
       const wId = String(r['Kode Dompet'] || r['Wallet Code'] || r.ID || r.id || `w-${idx}`);
       const wName = String(r['Nama Dompet / Tabungan'] || r['Wallet / Savings Name'] || r.Nama || r.name || 'Dompet');
-      const wBalance = parseFlexibleNumber(
-        r['Angka Saldo'] ?? r['Balance'] ?? r['Saldo Saat Ini'] ?? r['Formatted Balance'] ?? r.Saldo ?? r.FormatSaldo ?? r.balance ?? 0
-      );
-      const wGoal = r['Angka Target'] || r['Goal Amount'] || r['Target Tabungan'] || r['Formatted Goal'] || r.GoalAmount || r.FormatTarget
-        ? parseFlexibleNumber(r['Angka Target'] || r['Goal Amount'] || r['Target Tabungan'] || r['Formatted Goal'] || r.GoalAmount || r.FormatTarget)
-        : undefined;
+
+      // Check if exact base value is recorded in sheet
+      let wBalance: number;
+      if (r['Base Exact Balance'] !== undefined || r['Saldo Baku (Base)'] !== undefined) {
+        wBalance = parseFlexibleNumber(r['Base Exact Balance'] ?? r['Saldo Baku (Base)']);
+      } else {
+        const rawDispBal = parseFlexibleNumber(
+          r['Angka Saldo'] ?? r['Balance'] ?? r['Saldo Saat Ini'] ?? r['Formatted Balance'] ?? r.Saldo ?? r.FormatSaldo ?? r.balance ?? 0
+        );
+        wBalance = normalizeToBase(rawDispBal);
+      }
+
+      let wGoal: number | undefined;
+      if (r['Base Exact Goal'] !== undefined || r['Target Baku (Base)'] !== undefined) {
+        const baseGoal = parseFlexibleNumber(r['Base Exact Goal'] ?? r['Target Baku (Base)']);
+        wGoal = baseGoal > 0 ? baseGoal : undefined;
+      } else {
+        const rawGoal = r['Angka Target'] || r['Goal Amount'] || r['Target Tabungan'] || r['Formatted Goal'] || r.GoalAmount || r.FormatTarget;
+        if (rawGoal !== undefined && rawGoal !== null && rawGoal !== '-' && rawGoal !== '') {
+          const parsedDispGoal = parseFlexibleNumber(rawGoal);
+          wGoal = parsedDispGoal > 0 ? normalizeToBase(parsedDispGoal) : undefined;
+        }
+      }
 
       return {
         id: wId,
@@ -493,26 +595,43 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
 
     const categories: Category[] =
       categoryRows.length > 0
-        ? categoryRows.map((r, idx) => ({
-            id: String(r['Kode Kategori'] || r['Category Code'] || r.ID || r.id || `c-${idx}`),
-            name: String(r['Nama Kategori'] || r['Category Name'] || r.Nama || r.name || 'Kategori'),
-            type:
-              String(r['Jenis Kategori'] || r['Category Type'] || r.Tipe || r.type).toLowerCase().includes('masuk') ||
-              String(r['Jenis Kategori'] || r['Category Type'] || r.Tipe || r.type).toLowerCase().includes('income')
-                ? 'income'
-                : 'expense',
-            icon: String(r['Nama Ikon'] || r['Icon Name'] || r.Ikon || r.icon || 'Tag'),
-            color: String(r['Kode Warna'] || r['Color Code'] || r.Warna || r.color || '#1f7a5c'),
-            monthlyLimit:
-              r['Angka Batas Anggaran'] || r['Raw Limit Amount'] || r['Batas Anggaran Bulanan'] || r['Monthly Budget Limit'] || r.MonthlyLimit || r.FormatLimit
-                ? parseFlexibleNumber(r['Angka Batas Anggaran'] || r['Raw Limit Amount'] || r['Batas Anggaran Bulanan'] || r['Monthly Budget Limit'] || r.MonthlyLimit || r.FormatLimit)
-                : undefined,
-            system:
-              String(r['Kategori Bawaan Sistem'] || r['System Default'] || r.System || r.system).toLowerCase() === 'ya' ||
-              String(r['Kategori Bawaan Sistem'] || r['System Default'] || r.System || r.system).toLowerCase() === 'yes' ||
-              r['Kategori Bawaan Sistem'] === true ||
-              r.system === true,
-          }))
+        ? categoryRows.map((r, idx) => {
+            const rawName = String(r['Original Name'] || r['Nama Asli'] || r['Nama Kategori'] || r['Category Name'] || r.Nama || r.name || 'Kategori');
+            const trId = r['Translation ID'] || r['Terjemahan ID'] ? String(r['Translation ID'] || r['Terjemahan ID']) : undefined;
+            const trEn = r['Translation EN'] || r['Terjemahan EN'] ? String(r['Translation EN'] || r['Terjemahan EN']) : undefined;
+            const translations = trId || trEn ? { id: trId, en: trEn } : undefined;
+
+            let monthlyLimit: number | undefined;
+            if (r['Base Exact Limit'] !== undefined || r['Batas Baku (Base)'] !== undefined) {
+              const baseLim = parseFlexibleNumber(r['Base Exact Limit'] ?? r['Batas Baku (Base)']);
+              monthlyLimit = baseLim > 0 ? baseLim : undefined;
+            } else {
+              const rawLim = r['Angka Batas Anggaran'] || r['Raw Limit Amount'] || r['Batas Anggaran Bulanan'] || r['Monthly Budget Limit'] || r.MonthlyLimit || r.FormatLimit;
+              if (rawLim !== undefined && rawLim !== null && rawLim !== '-' && rawLim !== '') {
+                const parsedDispLim = parseFlexibleNumber(rawLim);
+                monthlyLimit = parsedDispLim > 0 ? normalizeToBase(parsedDispLim) : undefined;
+              }
+            }
+
+            return {
+              id: String(r['Kode Kategori'] || r['Category Code'] || r.ID || r.id || `c-${idx}`),
+              name: rawName,
+              type:
+                String(r['Jenis Kategori'] || r['Category Type'] || r.Tipe || r.type).toLowerCase().includes('masuk') ||
+                String(r['Jenis Kategori'] || r['Category Type'] || r.Tipe || r.type).toLowerCase().includes('income')
+                  ? 'income'
+                  : 'expense',
+              icon: String(r['Nama Ikon'] || r['Icon Name'] || r.Ikon || r.icon || 'Tag'),
+              color: String(r['Kode Warna'] || r['Color Code'] || r.Warna || r.color || '#1f7a5c'),
+              monthlyLimit,
+              system:
+                String(r['Kategori Bawaan Sistem'] || r['System Default'] || r.System || r.system).toLowerCase() === 'ya' ||
+                String(r['Kategori Bawaan Sistem'] || r['System Default'] || r.System || r.system).toLowerCase() === 'yes' ||
+                r['Kategori Bawaan Sistem'] === true ||
+                r.system === true,
+              translations,
+            };
+          })
         : DEFAULT_CATEGORIES;
 
     const categoryMap = new Map<string, string>();
@@ -527,7 +646,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
       walletMap.set(w.name.toLowerCase(), w.id);
     });
 
-    // Parse Transaksi (Seluruh Riwayat Tanpa Batasan)
+    // Parse Transaksi
     const txSheetName = wb.SheetNames.find(
       (s) => s.toLowerCase().includes('transaksi') || s.toLowerCase().includes('transaction') || s.toLowerCase().includes('riwayat')
     );
@@ -545,7 +664,6 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
         let wId = String(r['Kode Dompet'] || r['Wallet Code'] || r.WalletID || r.walletId || '');
         if (!wId && (r['Dompet / Akun'] || r['Wallet / Account'] || r.Dompet || r.dompet || r.Wallet || r.wallet)) {
           const rawWName = String(r['Dompet / Akun'] || r['Wallet / Account'] || r.Dompet || r.dompet || r.Wallet || r.wallet).trim();
-          // Extract source wallet if formatted as "Source ➔ Destination"
           const cleanWName = rawWName.split('➔')[0].trim().toLowerCase();
           wId = walletMap.get(cleanWName) || walletMap.get(rawWName.toLowerCase()) || '';
         }
@@ -564,8 +682,17 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
         const dateVal = r['Tanggal Transaksi'] || r['Transaction Date'] || r.Tanggal || r.date;
         const timeVal = r['Waktu (Jam:Menit)'] || r['Time (HH:mm)'] || r.Jam || r.time;
         const typeVal = String(r['Jenis Transaksi'] || r['Transaction Type'] || r.Tipe || r.type);
-        const amountVal = r['Angka Nominal'] ?? r.Amount ?? r.Jumlah ?? r['Nominal Transaksi'] ?? r['Formatted Amount'] ?? r.FormatNominal ?? r.amount ?? 0;
         const descVal = r['Catatan / Keterangan'] || r['Notes / Description'] || r.Deskripsi || r.description || 'Transaksi';
+
+        let amountVal: number;
+        if (r['Base Exact Amount'] !== undefined || r['Nominal Baku (Base)'] !== undefined) {
+          amountVal = parseFlexibleNumber(r['Base Exact Amount'] ?? r['Nominal Baku (Base)']);
+        } else {
+          const rawDispAmount = parseFlexibleNumber(
+            r['Angka Nominal'] ?? r.Amount ?? r.Jumlah ?? r['Nominal Transaksi'] ?? r['Formatted Amount'] ?? r.FormatNominal ?? r.amount ?? 0
+          );
+          amountVal = normalizeToBase(rawDispAmount);
+        }
 
         return {
           id: String(r['Kode Transaksi'] || r['Transaction Code'] || r.ID || r.id || `t-${idx}`),
@@ -575,22 +702,10 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
           categoryId: catId,
           walletId: wId,
           type: typeVal.toLowerCase().includes('masuk') || typeVal.toLowerCase().includes('income') ? 'income' : 'expense',
-          amount: parseFlexibleNumber(amountVal),
+          amount: amountVal,
           linkedWalletId: linkedWId || undefined,
         };
       });
-
-    // Parse Pengaturan (Mata Uang, Bahasa, Tema)
-    const settingSheetName = wb.SheetNames.find(
-      (s) => s.toLowerCase().includes('pengaturan') || s.toLowerCase().includes('setting')
-    );
-    const settingRows = settingSheetName ? XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[settingSheetName]) : [];
-    const currencyCode =
-      settingRows[0]?.['Mata Uang Utama'] || settingRows[0]?.['Base Currency'] || settingRows[0]?.MataUang || settingRows[0]?.currencyCode
-        ? String(settingRows[0]['Mata Uang Utama'] || settingRows[0]['Base Currency'] || settingRows[0].MataUang || settingRows[0].currencyCode)
-        : 'IDR';
-    const language = settingRows[0]?.['Bahasa Aplikasi'] || settingRows[0]?.['App Language'] || settingRows[0]?.Bahasa ? String(settingRows[0]['Bahasa Aplikasi'] || settingRows[0]['App Language'] || settingRows[0].Bahasa) : undefined;
-    const theme = settingRows[0]?.['Mode Tampilan'] || settingRows[0]?.['Display Mode'] || settingRows[0]?.Tema ? String(settingRows[0]['Mode Tampilan'] || settingRows[0]['Display Mode'] || settingRows[0].Tema) : undefined;
 
     return {
       wallets,
