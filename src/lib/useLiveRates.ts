@@ -17,53 +17,66 @@ export function useLiveRates(): LiveRatesState {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (silent = false) => {
     // Only attempt background fetch if online
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       return;
     }
 
-    setStatus('loading');
+    if (!silent) setStatus('loading');
     setError(null);
     try {
       const fresh = await fetchLiveRates();
       setSnapshot(fresh);
       setStatus('success');
     } catch (err) {
-      setStatus('error');
+      if (!silent) setStatus('error');
       setError((err as Error).message || 'Gagal memuat kurs terbaru.');
     }
   }, []);
 
   useEffect(() => {
     const cached = getInitialRates();
+    setSnapshot(cached);
+
+    // If online, immediately refresh rates in the background to ensure latest rates
     if (typeof navigator !== 'undefined' && navigator.onLine) {
-      if (!isCacheFresh(cached)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        void refresh();
-      } else {
-        setSnapshot(cached);
-        setStatus('success');
-      }
-    } else {
-      setSnapshot(cached);
-      setStatus('success');
+      void refresh(!isCacheFresh(cached));
     }
 
-    // Auto update when browser/device connects to internet
+    // Auto update when browser/device reconnects to internet
     const handleOnline = () => {
-      void refresh();
+      void refresh(false);
+    };
+
+    // Auto update when tab gains focus or becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && typeof navigator !== 'undefined' && navigator.onLine) {
+        void refresh(true);
+      }
+    };
+
+    const handleFocus = () => {
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        void refresh(true);
+      }
     };
 
     window.addEventListener('online', handleOnline);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Periodic auto-update every 15 minutes when online
     const interval = setInterval(() => {
       if (typeof navigator !== 'undefined' && navigator.onLine) {
-        void refresh();
+        void refresh(true);
       }
-    }, 30 * 60 * 1000); // 30 minutes
+    }, 15 * 60 * 1000);
 
     return () => {
       window.removeEventListener('online', handleOnline);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(interval);
     };
   }, [refresh]);
@@ -75,6 +88,6 @@ export function useLiveRates(): LiveRatesState {
     fetchedAt: snapshot.fetchedAt,
     status,
     error,
-    refresh,
+    refresh: () => refresh(false),
   };
 }

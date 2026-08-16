@@ -195,9 +195,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const toDisplay = useCallback(
     (amount: number) => {
-      const useStaticScale = state.currencyCode === 'IDR' || state.currencyCode === BASE_CURRENCY_CODE;
-      const ratesToUse = useStaticScale ? EXCHANGE_RATES : liveRates.rates;
-      const val = convertAmount(amount, BASE_CURRENCY_CODE, state.currencyCode, ratesToUse);
+      const val = convertAmount(amount, BASE_CURRENCY_CODE, state.currencyCode, liveRates.rates);
       const isZeroDecimal = state.currencyCode === 'IDR' || state.currencyCode === 'JPY';
       return isZeroDecimal ? Math.round(val) : Math.round(val * 100) / 100;
     },
@@ -205,8 +203,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   );
 
   const fromDisplay = useCallback(
-    (amount: number) => convertAmount(amount, state.currencyCode, BASE_CURRENCY_CODE, EXCHANGE_RATES),
-    [state.currencyCode]
+    (amount: number) => convertAmount(amount, state.currencyCode, BASE_CURRENCY_CODE, liveRates.rates),
+    [state.currencyCode, liveRates.rates]
   );
 
   const setCurrencyCode = useCallback((code: string) => {
@@ -522,14 +520,17 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }, [setLanguage]);
 
   const exportExcelBuffer = useCallback(() => {
-    return exportToExcelBuffer({
-      wallets: state.wallets,
-      categories: state.categories,
-      transactions: state.transactions,
-      currencyCode: state.currencyCode,
-      language: language,
-    });
-  }, [state.wallets, state.categories, state.transactions, state.currencyCode, language]);
+    return exportToExcelBuffer(
+      {
+        wallets: state.wallets,
+        categories: state.categories,
+        transactions: state.transactions,
+        currencyCode: state.currencyCode,
+        language: language,
+      },
+      liveRates.rates
+    );
+  }, [state.wallets, state.categories, state.transactions, state.currencyCode, language, liveRates.rates]);
 
   const importExcelBuffer = useCallback(
     (buffer: ArrayBuffer): boolean => {

@@ -75,13 +75,13 @@ function autofitColumns(sheet: XLSX.WorkSheet, minWidth = 14) {
   sheet['!cols'] = colWidths;
 }
 
-export function exportToExcelBuffer(data: BackupData): Uint8Array {
+export function exportToExcelBuffer(data: BackupData, rates: Record<string, number> = EXCHANGE_RATES): Uint8Array {
   const wb = XLSX.utils.book_new();
   const isEn = data.language === 'en';
   const activeLang = (data.language as Language) || 'id';
 
   const toDisp = (val: number) => {
-    const converted = convertAmount(val, BASE_CURRENCY_CODE, data.currencyCode, EXCHANGE_RATES);
+    const converted = convertAmount(val, BASE_CURRENCY_CODE, data.currencyCode, rates);
     const isZeroDecimal = data.currencyCode === 'IDR' || data.currencyCode === 'JPY';
     return isZeroDecimal ? Math.round(converted) : Math.round(converted * 100) / 100;
   };
