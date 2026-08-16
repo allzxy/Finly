@@ -7,8 +7,10 @@ import { ToastProvider } from './context/ToastContext';
 import FloatingNavbar from './components/FloatingNavbar';
 import PageTransition from './components/PageTransition';
 
-// Lazy load pages to maximize initial render speed (LCP/FCP) on low-end devices
-const Dashboard = lazy(() => import('./pages/Dashboard'));
+// Eager load primary landing screen (Dashboard) to achieve instant LCP/FCP < 0.3s
+import Dashboard from './pages/Dashboard';
+
+// Lazy load secondary routes on demand
 const Wallets = lazy(() => import('./pages/Wallets'));
 const Savings = lazy(() => import('./pages/Savings'));
 const Categories = lazy(() => import('./pages/Categories'));

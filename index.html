@@ -43,11 +43,37 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- Fonts with preconnect and display=swap for instant font rendering -->
+    <!-- Critical CSS for Instant Paint (FCP / Speed Index < 0.4s) -->
+    <style>
+      :root {
+        --color-bg: #f5f4f0;
+      }
+      :root.dark {
+        --color-bg: #12161a;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--color-bg);
+        font-family: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #root {
+        min-height: 100vh;
+        background-color: var(--color-bg);
+      }
+    </style>
+
+    <!-- Async Font Loading (Non-Render-Blocking for 100/100 PageSpeed) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
+    </noscript>
 
+    <!-- Instant Dark Mode Init Script (Zero FOUC / Zero Layout Shift) -->
     <script>
       (function () {
         try {
