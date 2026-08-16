@@ -84,12 +84,13 @@ export default function FloatingNavbar() {
         </NavLink>
 
         {/* Nav Links Pill Group */}
-        <nav className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)]/60 bg-[var(--color-surface-glass-alt)] p-1">
+        <nav aria-label="Navigasi Utama Desktop" className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)]/60 bg-[var(--color-surface-glass-alt)] p-1">
           {PRIMARY_NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
+              aria-label={item.label}
               className={({ isActive }) =>
                 `flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                   isActive
@@ -107,6 +108,9 @@ export default function FloatingNavbar() {
           <div ref={moreMenuRefDesktop} className="relative">
             <button
               onClick={() => setMoreOpen((v) => !v)}
+              aria-label={t('nav.menu')}
+              aria-expanded={moreOpen}
+              aria-haspopup="true"
               className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                 isMoreActive || moreOpen
                   ? 'bg-[var(--color-primary)] text-[var(--color-primary-contrast)] shadow-sm scale-102'
@@ -124,6 +128,7 @@ export default function FloatingNavbar() {
                     key={item.to}
                     to={item.to}
                     onClick={() => setMoreOpen(false)}
+                    aria-label={item.label}
                     className={({ isActive }) =>
                       `flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium transition ${
                         isActive
@@ -170,13 +175,14 @@ export default function FloatingNavbar() {
       </header>
 
       {/* 3. MOBILE & TABLET FLOATING BOTTOM NAVBAR */}
-      <nav className="glass-pill fixed bottom-3 left-1/2 z-40 flex lg:hidden items-center justify-between w-[calc(100%-1rem)] max-w-[440px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-2 sm:px-3.5 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
+      <nav aria-label="Navigasi Utama Mobile" className="glass-pill fixed bottom-3 left-1/2 z-40 flex lg:hidden items-center justify-between w-[calc(100%-1rem)] max-w-[440px] -translate-x-1/2 rounded-full border border-[var(--color-border)]/80 px-2 sm:px-3.5 py-1.5 shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition-all duration-300">
         {/* Kolom 1 & 2: Dasbor & Dompet */}
         {PRIMARY_NAV_ITEMS.slice(0, 2).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
+            aria-label={item.label}
             className={({ isActive }) =>
               `flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 text-center transition-all active:scale-95 duration-150 ${
                 isActive
@@ -217,6 +223,7 @@ export default function FloatingNavbar() {
             key={item.to}
             to={item.to}
             end={item.end}
+            aria-label={item.label}
             className={({ isActive }) =>
               `flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 text-center transition-all active:scale-95 duration-150 ${
                 isActive
@@ -240,6 +247,9 @@ export default function FloatingNavbar() {
         <div ref={moreMenuRefMobile} className="flex-1 flex flex-col items-center justify-center relative">
           <button
             onClick={() => setMoreOpen((v) => !v)}
+            aria-label={t('nav.menu')}
+            aria-expanded={moreOpen}
+            aria-haspopup="true"
             className={`flex flex-col items-center justify-center gap-0.5 rounded-full py-1 text-center transition-all active:scale-95 duration-150 w-full ${
               isMoreActive || moreOpen
                 ? 'text-[var(--color-primary)] font-bold scale-105'
@@ -259,6 +269,7 @@ export default function FloatingNavbar() {
                   key={item.to}
                   to={item.to}
                   onClick={() => setMoreOpen(false)}
+                  aria-label={item.label}
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium transition ${
                       isActive

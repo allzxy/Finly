@@ -249,7 +249,7 @@ export default function DailyChart({ transactions, month, selectedDate, onSelect
         </div>
 
         <div className="relative h-40 w-full sm:h-44">
-          <svg viewBox={`0 0 ${VB_WIDTH} ${VB_HEIGHT}`} preserveAspectRatio="none" className="h-full w-full overflow-visible">
+          <svg role="img" aria-label="Grafik Tren Arus Keuangan Harian" viewBox={`0 0 ${VB_WIDTH} ${VB_HEIGHT}`} preserveAspectRatio="none" className="h-full w-full overflow-visible">
             <defs>
               <linearGradient id="income-fill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.28" />

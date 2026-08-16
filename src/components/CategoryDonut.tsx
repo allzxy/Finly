@@ -51,7 +51,7 @@ export default function CategoryDonut({ segments, centerLabel, centerValue }: Pr
 
   return (
     <div className="relative mx-auto h-32 w-32 shrink-0 sm:h-36 sm:w-36">
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="h-full w-full -rotate-90 overflow-visible">
+      <svg role="img" aria-label="Diagram Lingkaran Pembagian Kategori" viewBox={`0 0 ${SIZE} ${SIZE}`} className="h-full w-full -rotate-90 overflow-visible">
         {/* Background Circle */}
         <circle
           cx={CENTER}

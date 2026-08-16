@@ -8,15 +8,15 @@
   --color-surface-alt: #edf0ea;
   --color-border: #e2ddd0;
   --color-ink: #1e241f;
-  --color-ink-soft: #545e54;
-  --color-muted: #8a9188;
+  --color-ink-soft: #4f594e;
+  --color-muted: #5d665b;
 
   --color-primary: #1f7a5c;
   --color-primary-soft: #d8ebe1;
   --color-primary-strong: #145842;
-  --color-accent: #3c6ea5;
+  --color-accent: #2e629b;
   --color-accent-soft: #dbe6f2;
-  --color-warn: #c1704a;
+  --color-warn: #b05228;
   --color-warn-soft: #f3e0d5;
 
   /* Warna teks yang kontrasnya aman ketika ditumpuk di atas solid
@@ -44,15 +44,15 @@
   --color-surface-alt: #232a30;
   --color-border: #2e363d;
   --color-ink: #eef1ef;
-  --color-ink-soft: #b7c0bc;
-  --color-muted: #7c8985;
+  --color-ink-soft: #c0cac5;
+  --color-muted: #9aaba5;
 
   --color-primary: #3fb890;
   --color-primary-soft: #17362b;
   --color-primary-strong: #7bdcb6;
   --color-accent: #6ea6e0;
   --color-accent-soft: #1c2c3d;
-  --color-warn: #e08a5f;
+  --color-warn: #f09a6f;
   --color-warn-soft: #3a281f;
 
   --color-primary-contrast: #0b2018;
