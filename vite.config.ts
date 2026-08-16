@@ -19,5 +19,19 @@ export default defineConfig(({ mode }) => {
         ignored: ['**/screenshots/**', '**/dist/**', '**/*.tmp', '**/*.~tmp'],
       },
     },
+    build: {
+      target: 'es2020',
+      minify: 'esbuild',
+      cssMinify: true,
+      chunkSizeWarningLimit: 800,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-xlsx': ['xlsx'],
+            'vendor-framework': ['react', 'react-dom', 'react-router-dom', 'framer-motion', 'lucide-react'],
+          },
+        },
+      },
+    },
   };
 });
