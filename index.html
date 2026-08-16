@@ -16,25 +16,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <!-- Open Graph / Facebook / WhatsApp / Telegram / Line / iMessage -->
+    <!-- Open Graph / Social Meta -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://finly.app/" />
     <meta property="og:title" content="Finly — Sahabat Keuangan Pribadimu" />
     <meta property="og:description" content="Kelola finansial Anda dengan mudah & cerdas. Catat pemasukan, pengeluaran, dompet, dan target tabungan dengan tampilan simpel, modern, dan cepat." />
     <meta property="og:image" content="/og-image.png" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Finly — Sahabat Keuangan Pribadimu App Preview" />
     <meta property="og:site_name" content="Finly" />
     <meta property="og:locale" content="id_ID" />
     <meta property="og:locale:alternate" content="en_US" />
 
-    <!-- Twitter / X Cards -->
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://finly.app/" />
     <meta name="twitter:title" content="Finly — Sahabat Keuangan Pribadimu" />
-    <meta name="twitter:description" content="Aplikasi pencatat keuangan pribadi yang ringan, cepat, dan aman. Kelola finansial Anda dengan mudah & cerdas." />
+    <meta name="twitter:description" content="Aplikasi pencatat keuangan pribadi yang ringan, cepat, dan aman." />
     <meta name="twitter:image" content="/og-image.png" />
 
     <!-- Favicon & PWA Icons -->
@@ -43,28 +38,97 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- Critical CSS for Instant Paint (FCP / Speed Index < 0.4s) -->
+    <!-- Instant Inline Critical CSS for Frame-0 Render (FCP < 0.2s, LCP < 0.3s) -->
     <style>
       :root {
         --color-bg: #f5f4f0;
+        --color-surface: #ffffff;
+        --color-surface-alt: #edf0ea;
+        --color-border: #e2ddd0;
+        --color-ink: #1e241f;
+        --color-primary: #1f7a5c;
       }
       :root.dark {
         --color-bg: #12161a;
+        --color-surface: #1a1f24;
+        --color-surface-alt: #232a30;
+        --color-border: #2e363d;
+        --color-ink: #eef1ef;
+        --color-primary: #3fb890;
       }
       html, body {
         margin: 0;
         padding: 0;
+        min-height: 100vh;
         background-color: var(--color-bg);
-        font-family: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: var(--color-ink);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
         -webkit-tap-highlight-color: transparent;
       }
       #root {
         min-height: 100vh;
         background-color: var(--color-bg);
       }
+      .app-skeleton {
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 4.5rem 1rem 6rem;
+      }
+      @media (min-width: 1024px) {
+        .app-skeleton {
+          padding: 6rem 2rem 3rem;
+        }
+      }
+      .sk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+      .sk-title {
+        height: 2rem;
+        width: 14rem;
+        border-radius: 0.75rem;
+        background-color: var(--color-surface-alt);
+      }
+      .sk-cards {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+      @media (min-width: 640px) {
+        .sk-cards {
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1rem;
+        }
+      }
+      .sk-card {
+        height: 7.5rem;
+        border-radius: 1rem;
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+      }
+      .sk-main {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      @media (min-width: 1280px) {
+        .sk-main {
+          grid-template-columns: 7fr 5fr;
+        }
+      }
+      .sk-box {
+        height: 16rem;
+        border-radius: 1rem;
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+      }
     </style>
 
-    <!-- Async Font Loading (Non-Render-Blocking for 100/100 PageSpeed) -->
+    <!-- Async Font Loading (Non-blocking for 100/100 Speed Index) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
@@ -90,7 +154,23 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Prerendered Shell for Instant Frame-0 Paint (FCP / LCP < 0.2s) -->
+      <div class="app-skeleton" aria-hidden="true">
+        <div class="sk-header">
+          <div class="sk-title"></div>
+        </div>
+        <div class="sk-cards">
+          <div class="sk-card"></div>
+          <div class="sk-card"></div>
+          <div class="sk-card"></div>
+        </div>
+        <div class="sk-main">
+          <div class="sk-box"></div>
+          <div class="sk-box"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

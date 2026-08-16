@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutGrid, Wallet, PiggyBank, Tag, History, Settings, Plus, MoreHorizontal } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import ThemeToggle from './ThemeToggle';
-import AddTransactionModal from './AddTransactionModal';
 import PocketIcon from './PocketIcon';
+
+const AddTransactionModal = lazy(() => import('./AddTransactionModal'));
 
 export default function FloatingNavbar() {
   const { t } = useLanguage();
@@ -287,8 +288,12 @@ export default function FloatingNavbar() {
         </div>
       </nav>
 
-      {/* Modal Quick Add Transaction */}
-      <AddTransactionModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
+      {/* Modal Quick Add Transaction (Lazy loaded on demand) */}
+      {addModalOpen && (
+        <Suspense fallback={null}>
+          <AddTransactionModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
+        </Suspense>
+      )}
     </>
   );
 }

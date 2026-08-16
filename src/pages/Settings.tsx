@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { LANGUAGE_LABELS } from '../lib/i18n';
 import Topbar from '../components/Topbar';
-import CurrencyModal from '../components/CurrencyModal';
-import LanguageModal from '../components/LanguageModal';
-import AboutModal from '../components/AboutModal';
-import GuideModal from '../components/GuideModal';
-import BackupModal from '../components/BackupModal';
 import { Coins, ChevronRight, Radio, WifiOff, Languages, Info, BookOpen, Database } from 'lucide-react';
+
+const CurrencyModal = lazy(() => import('../components/CurrencyModal'));
+const LanguageModal = lazy(() => import('../components/LanguageModal'));
+const AboutModal = lazy(() => import('../components/AboutModal'));
+const GuideModal = lazy(() => import('../components/GuideModal'));
+const BackupModal = lazy(() => import('../components/BackupModal'));
 
 export default function Settings() {
   const { currency, liveRates } = useFinance();
@@ -43,6 +44,7 @@ export default function Settings() {
           </p>
           <button
             onClick={() => setShowGuide(true)}
+            aria-label={isEn ? 'Open User Guide' : 'Buka Panduan Penggunaan'}
             className="flex w-full items-center justify-between gap-3 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-xs font-bold text-[var(--color-primary-contrast)] shadow-sm transition transform hover:scale-[1.01] active:scale-95"
           >
             <span className="flex items-center gap-2">
@@ -64,6 +66,7 @@ export default function Settings() {
           <p className="mb-3 text-xs text-[var(--color-ink-soft)]">{t('settings.backup.desc')}</p>
           <button
             onClick={() => setShowBackup(true)}
+            aria-label={t('backup.title')}
             className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-left transition hover:border-[var(--color-accent)]/40"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
@@ -96,6 +99,7 @@ export default function Settings() {
           </div>
           <button
             onClick={() => setShowCurrency(true)}
+            aria-label={t('settings.currency.title')}
             className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-left transition hover:border-[var(--color-primary)]/40"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-base font-semibold text-[var(--color-primary-strong)]">
@@ -120,13 +124,14 @@ export default function Settings() {
           <p className="mb-3 text-xs text-[var(--color-ink-soft)]">{t('settings.language.desc')}</p>
           <button
             onClick={() => setShowLanguage(true)}
-            className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-left transition hover:border-[var(--color-primary)]/40"
+            aria-label={t('settings.language.title')}
+            className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-left transition hover:border-[var(--color-accent)]/40"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
-              <Languages size={17} />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-xs font-bold text-[var(--color-accent)]">
+              {language.toUpperCase()}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-[var(--color-ink)]">{LANGUAGE_LABELS[language].native}</span>
+              <span className="block text-sm font-semibold text-[var(--color-ink)]">{t('settings.language.title')}</span>
               <span className="block truncate text-xs text-[var(--color-muted)]">{LANGUAGE_LABELS[language].label}</span>
             </span>
             <ChevronRight size={16} className="shrink-0 text-[var(--color-muted)]" />
@@ -144,6 +149,7 @@ export default function Settings() {
           <p className="mb-3 text-xs text-[var(--color-ink-soft)]">{t('settings.about.desc')}</p>
           <button
             onClick={() => setShowAbout(true)}
+            aria-label={t('settings.about.title')}
             className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-left transition hover:border-[var(--color-primary)]/40"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-warn-soft)] text-[var(--color-warn)]">
@@ -158,11 +164,13 @@ export default function Settings() {
         </div>
       </div>
 
-      <GuideModal open={showGuide} onClose={() => setShowGuide(false)} />
-      <BackupModal open={showBackup} onClose={() => setShowBackup(false)} />
-      <CurrencyModal open={showCurrency} onClose={() => setShowCurrency(false)} />
-      <LanguageModal open={showLanguage} onClose={() => setShowLanguage(false)} />
-      <AboutModal open={showAbout} onClose={() => setShowAbout(false)} />
+      <Suspense fallback={null}>
+        {showGuide && <GuideModal open={showGuide} onClose={() => setShowGuide(false)} />}
+        {showBackup && <BackupModal open={showBackup} onClose={() => setShowBackup(false)} />}
+        {showCurrency && <CurrencyModal open={showCurrency} onClose={() => setShowCurrency(false)} />}
+        {showLanguage && <LanguageModal open={showLanguage} onClose={() => setShowLanguage(false)} />}
+        {showAbout && <AboutModal open={showAbout} onClose={() => setShowAbout(false)} />}
+      </Suspense>
     </div>
   );
 }

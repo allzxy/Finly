@@ -13,6 +13,7 @@ export interface BackupData {
   theme?: string;
   exportedAt?: string;
   version?: string;
+  translations?: Record<string, { id?: string; en?: string }>;
 }
 
 export function formatCurrencyDisplay(amount: number, currencyCode: string): string {
@@ -358,6 +359,7 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
         currencyCode: data.currencyCode,
         language: data.language,
         theme: data.theme,
+        translations: data.translations,
         version: '2.0',
       }),
     },
@@ -509,6 +511,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
               currencyCode: typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR',
               language: typeof parsed.language === 'string' ? parsed.language : undefined,
               theme: typeof parsed.theme === 'string' ? parsed.theme : undefined,
+              translations: parsed.translations && typeof parsed.translations === 'object' ? parsed.translations : undefined,
               version: typeof parsed.version === 'string' ? parsed.version : '2.0',
             };
           }

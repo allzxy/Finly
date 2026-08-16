@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import WalletCard from '../components/WalletCard';
-import WalletFormModal from '../components/WalletFormModal';
-import WalletFundModal from '../components/WalletFundModal';
-import ConfirmModal from '../components/ConfirmModal';
 import Topbar from '../components/Topbar';
 import { formatMoney } from '../lib/currencies';
 import { Plus } from 'lucide-react';
 import type { Wallet } from '../lib/types';
+
+const WalletFormModal = lazy(() => import('../components/WalletFormModal'));
+const WalletFundModal = lazy(() => import('../components/WalletFundModal'));
+const ConfirmModal = lazy(() => import('../components/ConfirmModal'));
 
 export default function Savings() {
   const { wallets, currency, deleteWallet, toDisplay } = useFinance();
@@ -59,17 +60,24 @@ export default function Savings() {
         ))}
       </div>
 
-      <WalletFormModal open={formOpen} onClose={() => setFormOpen(false)} editing={editing} mode="savings" />
-      <WalletFundModal open={!!funding} onClose={() => setFunding(null)} wallet={funding} />
-
-      <ConfirmModal
-        open={!!deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => deleting && deleteWallet(deleting.id)}
-        title={t('wallets.delete')}
-        description={t('wallets.deleteDesc', { name: deleting?.name ?? '' })}
-        confirmLabel={t('common.delete')}
-      />
+      <Suspense fallback={null}>
+        {formOpen && (
+          <WalletFormModal open={formOpen} onClose={() => setFormOpen(false)} editing={editing} mode="savings" />
+        )}
+        {funding && (
+          <WalletFundModal open={!!funding} onClose={() => setFunding(null)} wallet={funding} />
+        )}
+        {deleting && (
+          <ConfirmModal
+            open={!!deleting}
+            onClose={() => setDeleting(null)}
+            onConfirm={() => deleting && deleteWallet(deleting.id)}
+            title={t('wallets.delete')}
+            description={t('wallets.deleteDesc', { name: deleting?.name ?? '' })}
+            confirmLabel={t('common.delete')}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

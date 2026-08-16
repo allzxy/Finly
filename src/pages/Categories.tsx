@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import Topbar from '../components/Topbar';
-import CategoryFormModal from '../components/CategoryFormModal';
-import ConfirmModal from '../components/ConfirmModal';
 import { formatMoney } from '../lib/currencies';
 import { CATEGORY_ICONS } from '../lib/icons';
 import type { Category, TransactionType } from '../lib/types';
 import { Plus, Pencil, Trash2, Wallet2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+
+const CategoryFormModal = lazy(() => import('../components/CategoryFormModal'));
+const ConfirmModal = lazy(() => import('../components/ConfirmModal'));
 
 export default function Categories() {
   const { categories, transactions, selectedMonth, deleteCategory, currency, toDisplay, tCategory } = useFinance();
@@ -170,16 +171,21 @@ export default function Categories() {
         )}
       </div>
 
-      <CategoryFormModal open={formOpen} onClose={() => setFormOpen(false)} editing={editing} defaultType={tab} />
-
-      <ConfirmModal
-        open={!!deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => deleting && deleteCategory(deleting.id)}
-        title={t('categories.delete')}
-        description={t('categories.deleteDesc', { name: deleting?.name ?? '' })}
-        confirmLabel={t('common.delete')}
-      />
+      <Suspense fallback={null}>
+        {formOpen && (
+          <CategoryFormModal open={formOpen} onClose={() => setFormOpen(false)} editing={editing} defaultType={tab} />
+        )}
+        {deleting && (
+          <ConfirmModal
+            open={!!deleting}
+            onClose={() => setDeleting(null)}
+            onConfirm={() => deleting && deleteCategory(deleting.id)}
+            title={t('categories.delete')}
+            description={t('categories.deleteDesc', { name: deleting?.name ?? '' })}
+            confirmLabel={t('common.delete')}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

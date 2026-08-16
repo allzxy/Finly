@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Transaction } from '../lib/types';
+import type { TransactionFilters } from './TransactionFilterModal';
 import { useFinance } from '../context/FinanceContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatMoney } from '../lib/currencies';
 import { CATEGORY_ICONS } from '../lib/icons';
 import { Receipt, Trash2, ListFilter, MoreVertical, Pencil, X, ChevronRight, Trash, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
-import AddTransactionModal from './AddTransactionModal';
-import TransactionFilterModal, { type TransactionFilters } from './TransactionFilterModal';
-import ConfirmModal from './ConfirmModal';
+
+const AddTransactionModal = lazy(() => import('./AddTransactionModal'));
+const TransactionFilterModal = lazy(() => import('./TransactionFilterModal'));
+const ConfirmModal = lazy(() => import('./ConfirmModal'));
 
 function formatDateChip(dateStr: string, locale: string) {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -92,7 +94,7 @@ export default function TransactionList({ transactions, preview = false }: Props
 
       {!preview && isFiltered && (
         <div className="mb-3 flex flex-wrap gap-1.5">
-          {activeChips.map((chip) => <button key={chip.key} onClick={() => clearChip(chip.key)} className="flex items-center gap-1 rounded-full bg-[var(--color-primary-soft)] py-1 pl-3 pr-1.5 text-[11px] font-medium text-[var(--color-primary-strong)] transition hover:bg-[var(--color-primary)]/20">{chip.label}<span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/60"><X size={10} /></span></button>)}
+          {activeChips.map((chip) => <button key={String(chip.key)} onClick={() => clearChip(chip.key)} className="flex items-center gap-1 rounded-full bg-[var(--color-primary-soft)] py-1 pl-3 pr-1.5 text-[11px] font-medium text-[var(--color-primary-strong)] transition hover:bg-[var(--color-primary)]/20">{chip.label}<span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/60"><X size={10} /></span></button>)}
         </div>
       )}
 
@@ -167,9 +169,17 @@ export default function TransactionList({ transactions, preview = false }: Props
           })}
         </div>
       )}
-      <TransactionFilterModal open={filterModalOpen} onClose={() => setFilterModalOpen(false)} filters={filters} onChange={setFilters} />
-      <AddTransactionModal open={!!editingTx} onClose={() => setEditingTx(null)} editing={editingTx} />
-      <ConfirmModal open={confirmClearOpen} onClose={() => setConfirmClearOpen(false)} onConfirm={clearAllTransactions} title={t('tx.clearAllTitle')} description={t('tx.clearAllDesc')} confirmLabel={t('tx.clearAllConfirm')} />
+      <Suspense fallback={null}>
+        {filterModalOpen && (
+          <TransactionFilterModal open={filterModalOpen} onClose={() => setFilterModalOpen(false)} filters={filters} onChange={setFilters} />
+        )}
+        {editingTx && (
+          <AddTransactionModal open={!!editingTx} onClose={() => setEditingTx(null)} editing={editingTx} />
+        )}
+        {confirmClearOpen && (
+          <ConfirmModal open={confirmClearOpen} onClose={() => setConfirmClearOpen(false)} onConfirm={clearAllTransactions} title={t('tx.clearAllTitle')} description={t('tx.clearAllDesc')} confirmLabel={t('tx.clearAllConfirm')} />
+        )}
+      </Suspense>
     </div>
   );
 }
