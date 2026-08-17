@@ -33,14 +33,14 @@
 
 <br/>
 
-<img src="./screenshots/dashboard.png" alt="Dasbor / Dashboard Screen" width="31%" />
-<img src="./screenshots/wallets.png" alt="Dompet / Wallets Screen" width="31%" />
-<img src="./screenshots/savings.png" alt="Tabungan / Savings Goals Screen" width="31%" />
+<img src="./screenshots/dashboard.jpeg" alt="Dasbor / Dashboard Screen" width="31%" />
+<img src="./screenshots/wallets.jpeg" alt="Dompet / Wallets Screen" width="31%" />
+<img src="./screenshots/savings.jpeg" alt="Tabungan / Savings Goals Screen" width="31%" />
 
 <br/><br/>
 
-<img src="./screenshots/categories.png" alt="Kategori / Categories Screen" width="40%" />
-<img src="./screenshots/history.png" alt="Riwayat / History Screen" width="40%" />
+<img src="./screenshots/categories.jpeg" alt="Kategori / Categories Screen" width="40%" />
+<img src="./screenshots/history.jpeg" alt="Riwayat / History Screen" width="40%" />
 
 </div>
 
