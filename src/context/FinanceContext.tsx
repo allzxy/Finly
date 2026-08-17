@@ -116,7 +116,6 @@ function loadInitial(): FinanceState {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
           const currencyCode = typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR';
-          const isLegacyBaseUSD = parsed._currencyStored !== true;
 
           const rawCategories: Category[] = Array.isArray(parsed.categories) ? parsed.categories : initialCategories;
           let categories = sanitizeCategories(rawCategories);
@@ -127,8 +126,17 @@ function loadInitial(): FinanceState {
           const rawWallets = Array.isArray(parsed.wallets) ? parsed.wallets : [];
           let wallets = reconcileWalletBalances(rawWallets);
 
+          // Cek apakah data ini benar-benar data lama dengan basis USD (float kecil di bawah 500)
+          const isLegacyBaseUSD =
+            parsed._currencyStored !== true &&
+            parsed.version !== '2.0' &&
+            currencyCode !== BASE_CURRENCY_CODE &&
+            wallets.length > 0 &&
+            wallets.every((w) => (w.balance || 0) < 500) &&
+            transactions.every((t) => (t.amount || 0) < 500);
+
           // Migrasi sekali jika data lama tersimpan dalam basis USD ternormalisasi
-          if (isLegacyBaseUSD && currencyCode !== BASE_CURRENCY_CODE) {
+          if (isLegacyBaseUSD) {
             const isZeroDecimal = currencyCode === 'IDR' || currencyCode === 'JPY';
             const convertLegacy = (v: number | undefined) => {
               if (typeof v !== 'number' || isNaN(v)) return v;
@@ -577,13 +585,21 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       }
 
       const currencyCode = typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR';
-      const isLegacyBaseUSD = parsed._currencyStored !== true;
 
       let categories = sanitizeCategories(parsed.categories);
       let transactions = sanitizeTransactions(parsed.transactions, categories);
       let wallets = reconcileWalletBalances(parsed.wallets);
 
-      if (isLegacyBaseUSD && currencyCode !== BASE_CURRENCY_CODE) {
+      // Cek apakah data ini benar-benar data lama dengan basis USD (float kecil di bawah 500)
+      const isLegacyBaseUSD =
+        parsed._currencyStored !== true &&
+        parsed.version !== '2.0' &&
+        currencyCode !== BASE_CURRENCY_CODE &&
+        wallets.length > 0 &&
+        wallets.every((w) => (w.balance || 0) < 500) &&
+        transactions.every((t) => (t.amount || 0) < 500);
+
+      if (isLegacyBaseUSD) {
         const isZeroDecimal = currencyCode === 'IDR' || currencyCode === 'JPY';
         const convertLegacy = (v: number | undefined) => {
           if (typeof v !== 'number' || isNaN(v)) return v;

@@ -14,6 +14,7 @@ export interface BackupData {
   exportedAt?: string;
   version?: string;
   translations?: Record<string, { id?: string; en?: string }>;
+  _currencyStored?: boolean;
 }
 
 export function formatCurrencyDisplay(amount: number, currencyCode: string): string {
@@ -341,6 +342,7 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
         theme: data.theme,
         translations: data.translations,
         version: '2.0',
+        _currencyStored: true,
       }),
     },
   ];
@@ -493,6 +495,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
               theme: typeof parsed.theme === 'string' ? parsed.theme : undefined,
               translations: parsed.translations && typeof parsed.translations === 'object' ? parsed.translations : undefined,
               version: typeof parsed.version === 'string' ? parsed.version : '2.0',
+              _currencyStored: true,
             };
           }
         } catch {
@@ -514,11 +517,6 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
     const language = settingRows[0]?.['Bahasa Aplikasi'] || settingRows[0]?.['App Language'] || settingRows[0]?.Bahasa ? String(settingRows[0]['Bahasa Aplikasi'] || settingRows[0]['App Language'] || settingRows[0].Bahasa) : undefined;
     const theme = settingRows[0]?.['Mode Tampilan'] || settingRows[0]?.['Display Mode'] || settingRows[0]?.Tema ? String(settingRows[0]['Mode Tampilan'] || settingRows[0]['Display Mode'] || settingRows[0].Tema) : undefined;
 
-    // Currency normalization helper for visual spreadsheets
-    const normalizeToBase = (val: number) => {
-      return convertAmount(val, currencyCode, BASE_CURRENCY_CODE, EXCHANGE_RATES);
-    };
-
     // Parse Dompet & Tabungan
     const walletSheetName = wb.SheetNames.find(
       (s) => s.toLowerCase().includes('dompet') || s.toLowerCase().includes('wallet') || s.toLowerCase().includes('tabungan') || s.toLowerCase().includes('savings')
@@ -535,14 +533,12 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
       const wId = String(r['Kode Dompet'] || r['Wallet Code'] || r.ID || r.id || `w-${idx}`);
       const wName = String(r['Nama Dompet / Tabungan'] || r['Wallet / Savings Name'] || r.Nama || r.name || 'Dompet');
 
-      // Check if exact value is recorded in sheet
       let wBalance: number;
       if (r['Base Exact Balance'] !== undefined || r['Saldo Baku (Base)'] !== undefined) {
         wBalance = parseFlexibleNumber(r['Base Exact Balance'] ?? r['Saldo Baku (Base)']);
       } else {
-        wBalance = parseFlexibleNumber(
-          r['Angka Saldo'] ?? r['Balance'] ?? r['Saldo Saat Ini'] ?? r['Formatted Balance'] ?? r.Saldo ?? r.FormatSaldo ?? r.balance ?? 0
-        );
+        const rawBal = r['Saldo'] ?? r['Saldo Saat Ini'] ?? r['Balance'] ?? r['Current Balance'] ?? r['Angka Saldo'] ?? r.Saldo ?? r.balance ?? 0;
+        wBalance = parseFlexibleNumber(rawBal);
       }
 
       let wGoal: number | undefined;
@@ -550,7 +546,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
         const baseGoal = parseFlexibleNumber(r['Base Exact Goal'] ?? r['Target Baku (Base)']);
         wGoal = baseGoal > 0 ? baseGoal : undefined;
       } else {
-        const rawGoal = r['Angka Target'] || r['Goal Amount'] || r['Target Tabungan'] || r['Formatted Goal'] || r.GoalAmount || r.FormatTarget;
+        const rawGoal = r['Target'] ?? r['Target Tabungan'] ?? r['Goal Amount'] ?? r['Goal'] ?? r['Formatted Goal'] ?? r['Angka Target'] ?? r.Target ?? r.goalAmount;
         if (rawGoal !== undefined && rawGoal !== null && rawGoal !== '-' && rawGoal !== '') {
           const parsedDispGoal = parseFlexibleNumber(rawGoal);
           wGoal = parsedDispGoal > 0 ? parsedDispGoal : undefined;
@@ -588,7 +584,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
               const baseLim = parseFlexibleNumber(r['Base Exact Limit'] ?? r['Batas Baku (Base)']);
               monthlyLimit = baseLim > 0 ? baseLim : undefined;
             } else {
-              const rawLim = r['Angka Batas Anggaran'] || r['Raw Limit Amount'] || r['Batas Anggaran Bulanan'] || r['Monthly Budget Limit'] || r.MonthlyLimit || r.FormatLimit;
+              const rawLim = r['Batas Anggaran'] ?? r['Batas Anggaran Bulanan'] ?? r['Monthly Budget Limit'] ?? r['Limit'] ?? r['Raw Limit Amount'] ?? r['Angka Batas Anggaran'] ?? r.MonthlyLimit ?? r.monthlyLimit;
               if (rawLim !== undefined && rawLim !== null && rawLim !== '-' && rawLim !== '') {
                 const parsedDispLim = parseFlexibleNumber(rawLim);
                 monthlyLimit = parsedDispLim > 0 ? parsedDispLim : undefined;
@@ -635,7 +631,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
     const txRows = txSheetName ? XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[txSheetName]) : [];
 
     const transactions: Transaction[] = txRows
-      .filter((r) => r['Tanggal Transaksi'] || r['Transaction Date'] || r.Tanggal || r.date || r['Angka Nominal'] || r.Amount || r.Jumlah || r.amount || r['Nominal Transaksi'] || r['Formatted Amount'])
+      .filter((r) => r['Tanggal Transaksi'] || r['Transaction Date'] || r.Tanggal || r.date || r.Jumlah || r.Amount || r['Nominal Transaksi'] || r['Formatted Amount'] || r['Angka Nominal'])
       .map((r, idx) => {
         let catId = String(r['Kode Kategori'] || r['Category Code'] || r.CategoryID || r.categoryId || '');
         if (!catId && (r.Kategori || r.kategori || r.Category || r.category)) {
@@ -670,9 +666,8 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
         if (r['Base Exact Amount'] !== undefined || r['Nominal Baku (Base)'] !== undefined) {
           amountVal = parseFlexibleNumber(r['Base Exact Amount'] ?? r['Nominal Baku (Base)']);
         } else {
-          amountVal = parseFlexibleNumber(
-            r['Angka Nominal'] ?? r.Amount ?? r.Jumlah ?? r['Nominal Transaksi'] ?? r['Formatted Amount'] ?? r.FormatNominal ?? r.amount ?? 0
-          );
+          const rawAmount = r['Jumlah'] ?? r['Nominal Transaksi'] ?? r['Amount'] ?? r['Jumlah Transaksi'] ?? r['Formatted Amount'] ?? r['Angka Nominal'] ?? r.Jumlah ?? r.amount ?? 0;
+          amountVal = parseFlexibleNumber(rawAmount);
         }
 
         return {
@@ -695,6 +690,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
       currencyCode,
       language,
       theme,
+      _currencyStored: true,
     };
   } catch {
     return null;
