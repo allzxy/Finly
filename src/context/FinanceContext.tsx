@@ -115,20 +115,49 @@ function loadInitial(): FinanceState {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
+          const currencyCode = typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR';
+          const isLegacyBaseUSD = parsed._currencyStored !== true;
+
           const rawCategories: Category[] = Array.isArray(parsed.categories) ? parsed.categories : initialCategories;
-          const categories = sanitizeCategories(rawCategories);
+          let categories = sanitizeCategories(rawCategories);
 
           const rawTx = Array.isArray(parsed.transactions) ? parsed.transactions : [];
-          const transactions = sanitizeTransactions(rawTx, categories);
+          let transactions = sanitizeTransactions(rawTx, categories);
 
           const rawWallets = Array.isArray(parsed.wallets) ? parsed.wallets : [];
-          const wallets = reconcileWalletBalances(rawWallets);
+          let wallets = reconcileWalletBalances(rawWallets);
+
+          // Migrasi sekali jika data lama tersimpan dalam basis USD ternormalisasi
+          if (isLegacyBaseUSD && currencyCode !== BASE_CURRENCY_CODE) {
+            const isZeroDecimal = currencyCode === 'IDR' || currencyCode === 'JPY';
+            const convertLegacy = (v: number | undefined) => {
+              if (typeof v !== 'number' || isNaN(v)) return v;
+              const res = convertAmount(v, BASE_CURRENCY_CODE, currencyCode, EXCHANGE_RATES);
+              return isZeroDecimal ? Math.round(res) : Math.round(res * 100) / 100;
+            };
+
+            wallets = wallets.map((w) => ({
+              ...w,
+              balance: convertLegacy(w.balance) ?? 0,
+              goalAmount: w.goalAmount !== undefined ? convertLegacy(w.goalAmount) : undefined,
+            }));
+
+            transactions = transactions.map((tr) => ({
+              ...tr,
+              amount: convertLegacy(tr.amount) ?? 0,
+            }));
+
+            categories = categories.map((c) => ({
+              ...c,
+              monthlyLimit: c.monthlyLimit !== undefined ? convertLegacy(c.monthlyLimit) : undefined,
+            }));
+          }
 
           return {
             wallets,
             categories,
             transactions,
-            currencyCode: typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR',
+            currencyCode,
             selectedMonth: currentMonthKey(),
           };
         }
@@ -166,6 +195,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       window.localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
+          _currencyStored: true,
           wallets: state.wallets,
           categories: state.categories,
           transactions: state.transactions,
@@ -193,23 +223,66 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const currency = useMemo(() => CURRENCIES.find((c) => c.code === state.currencyCode) ?? CURRENCIES[0], [state.currencyCode]);
 
+  // Nominal sudah tersimpan dalam mata uang aktif pengguna, tidak terdistorsi saat kurs live berubah
   const toDisplay = useCallback(
     (amount: number) => {
-      const val = convertAmount(amount, BASE_CURRENCY_CODE, state.currencyCode, liveRates.rates);
+      if (typeof amount !== 'number' || isNaN(amount)) return 0;
       const isZeroDecimal = state.currencyCode === 'IDR' || state.currencyCode === 'JPY';
-      return isZeroDecimal ? Math.round(val) : Math.round(val * 100) / 100;
+      return isZeroDecimal ? Math.round(amount) : Math.round(amount * 100) / 100;
     },
-    [state.currencyCode, liveRates.rates]
+    [state.currencyCode]
   );
 
   const fromDisplay = useCallback(
-    (amount: number) => convertAmount(amount, state.currencyCode, BASE_CURRENCY_CODE, liveRates.rates),
-    [state.currencyCode, liveRates.rates]
+    (amount: number) => {
+      if (typeof amount !== 'number' || isNaN(amount)) return 0;
+      return amount;
+    },
+    []
   );
 
-  const setCurrencyCode = useCallback((code: string) => {
-    setState((s) => ({ ...s, currencyCode: code }));
-  }, []);
+  // Konversi nominal HANYA terjadi saat pengguna sengaja mengganti mata uang aktif
+  const setCurrencyCode = useCallback(
+    (newCode: string) => {
+      setState((s) => {
+        if (s.currencyCode === newCode) return s;
+        const oldCode = s.currencyCode;
+        const rates = liveRates.rates;
+
+        const convert = (val: number | undefined) => {
+          if (typeof val !== 'number' || isNaN(val)) return val;
+          const res = convertAmount(val, oldCode, newCode, rates);
+          const isZeroDecimal = newCode === 'IDR' || newCode === 'JPY';
+          return isZeroDecimal ? Math.round(res) : Math.round(res * 100) / 100;
+        };
+
+        const wallets = s.wallets.map((w) => ({
+          ...w,
+          balance: convert(w.balance) ?? 0,
+          goalAmount: w.goalAmount !== undefined ? convert(w.goalAmount) : undefined,
+        }));
+
+        const transactions = s.transactions.map((tr) => ({
+          ...tr,
+          amount: convert(tr.amount) ?? 0,
+        }));
+
+        const categories = s.categories.map((c) => ({
+          ...c,
+          monthlyLimit: c.monthlyLimit !== undefined ? convert(c.monthlyLimit) : undefined,
+        }));
+
+        return {
+          ...s,
+          currencyCode: newCode,
+          wallets,
+          transactions,
+          categories,
+        };
+      });
+    },
+    [liveRates.rates]
+  );
 
   const setSelectedMonth = useCallback((month: string) => {
     setState((s) => ({ ...s, selectedMonth: month }));
@@ -478,6 +551,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     return JSON.stringify(
       {
         version: '2.0',
+        _currencyStored: true,
         exportedAt: new Date().toISOString(),
         wallets: state.wallets,
         categories: state.categories,
@@ -502,15 +576,43 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         setLanguage(parsed.language);
       }
 
-      const categories = sanitizeCategories(parsed.categories);
-      const transactions = sanitizeTransactions(parsed.transactions, categories);
-      const wallets = reconcileWalletBalances(parsed.wallets);
+      const currencyCode = typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR';
+      const isLegacyBaseUSD = parsed._currencyStored !== true;
+
+      let categories = sanitizeCategories(parsed.categories);
+      let transactions = sanitizeTransactions(parsed.transactions, categories);
+      let wallets = reconcileWalletBalances(parsed.wallets);
+
+      if (isLegacyBaseUSD && currencyCode !== BASE_CURRENCY_CODE) {
+        const isZeroDecimal = currencyCode === 'IDR' || currencyCode === 'JPY';
+        const convertLegacy = (v: number | undefined) => {
+          if (typeof v !== 'number' || isNaN(v)) return v;
+          const res = convertAmount(v, BASE_CURRENCY_CODE, currencyCode, EXCHANGE_RATES);
+          return isZeroDecimal ? Math.round(res) : Math.round(res * 100) / 100;
+        };
+
+        wallets = wallets.map((w) => ({
+          ...w,
+          balance: convertLegacy(w.balance) ?? 0,
+          goalAmount: w.goalAmount !== undefined ? convertLegacy(w.goalAmount) : undefined,
+        }));
+
+        transactions = transactions.map((tr) => ({
+          ...tr,
+          amount: convertLegacy(tr.amount) ?? 0,
+        }));
+
+        categories = categories.map((c) => ({
+          ...c,
+          monthlyLimit: c.monthlyLimit !== undefined ? convertLegacy(c.monthlyLimit) : undefined,
+        }));
+      }
 
       setState({
         wallets,
         categories,
         transactions,
-        currencyCode: typeof parsed.currencyCode === 'string' ? parsed.currencyCode : 'IDR',
+        currencyCode,
         selectedMonth: currentMonthKey(),
       });
       return true;

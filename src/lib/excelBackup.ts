@@ -82,9 +82,9 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
   const activeLang = (data.language as Language) || 'id';
 
   const toDisp = (val: number) => {
-    const converted = convertAmount(val, BASE_CURRENCY_CODE, data.currencyCode, rates);
+    if (typeof val !== 'number' || isNaN(val)) return 0;
     const isZeroDecimal = data.currencyCode === 'IDR' || data.currencyCode === 'JPY';
-    return isZeroDecimal ? Math.round(converted) : Math.round(converted * 100) / 100;
+    return isZeroDecimal ? Math.round(val) : Math.round(val * 100) / 100;
   };
 
   const categoryLookup = new Map<string, string>();
@@ -202,7 +202,6 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
           'Transaction Date': t.date,
           'Time (HH:mm)': t.time ?? '',
           'Transaction Type': txTypeLabel,
-          'Formatted Amount': formatCurrencyDisplay(dispAmount, data.currencyCode),
           Amount: dispAmount,
           Category: resolvedCategory,
           'Wallet / Account': walletAccountDisplay,
@@ -212,14 +211,12 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
           'Category Code': t.categoryId || '',
           'Wallet Code': t.walletId,
           'Linked Wallet Code': t.linkedWalletId ?? '',
-          'Base Exact Amount': t.amount,
         }
       : {
           'Tanggal Transaksi': t.date,
           'Waktu (Jam:Menit)': t.time ?? '',
           'Jenis Transaksi': txTypeLabel,
-          'Nominal Transaksi': formatCurrencyDisplay(dispAmount, data.currencyCode),
-          'Angka Nominal': dispAmount,
+          'Nominal Transaksi': dispAmount,
           Kategori: resolvedCategory,
           'Dompet / Akun': walletAccountDisplay,
           'Dompet Tujuan': targetWalletName || '-',
@@ -228,7 +225,6 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
           'Kode Kategori': t.categoryId || '',
           'Kode Dompet': t.walletId,
           'Kode Dompet Sumber': t.linkedWalletId ?? '',
-          'Nominal Baku (Base)': t.amount,
         };
   });
   const txSheet = XLSX.utils.json_to_sheet(txRows);
@@ -252,34 +248,24 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
       ? {
           'Wallet / Savings Name': w.name,
           'Account Type': walletTypeLabel,
-          'Current Balance': formatCurrencyDisplay(dispBalance, data.currencyCode),
           Balance: dispBalance,
-          'Formatted Goal': dispGoal > 0 ? formatCurrencyDisplay(dispGoal, data.currencyCode) : '-',
-          'Goal Amount': dispGoal > 0 ? dispGoal : 0,
+          'Goal Amount': dispGoal > 0 ? dispGoal : '-',
           'Savings Progress': pctLabel,
-          'Progress Rate': pct,
           'Bank / Provider Name': w.institution ?? '',
           'Wallet Code': w.id,
           'Color Code': w.color,
           'Linked Wallet Code': w.linkedWalletId ?? '',
-          'Base Exact Balance': w.balance,
-          'Base Exact Goal': w.goalAmount ?? 0,
         }
       : {
           'Nama Dompet / Tabungan': w.name,
           'Jenis Akun': walletTypeLabel,
-          'Saldo Saat Ini': formatCurrencyDisplay(dispBalance, data.currencyCode),
-          'Angka Saldo': dispBalance,
-          'Target Tabungan': dispGoal > 0 ? formatCurrencyDisplay(dispGoal, data.currencyCode) : '-',
-          'Angka Target': dispGoal > 0 ? dispGoal : 0,
+          'Saldo Saat Ini': dispBalance,
+          'Target Tabungan': dispGoal > 0 ? dispGoal : '-',
           'Persentase Terkumpul': pctLabel,
-          'Angka Persen': pct,
           'Nama Bank / Provider': w.institution ?? '',
           'Kode Dompet': w.id,
           'Kode Warna': w.color,
           'Kode Dompet Sumber': w.linkedWalletId ?? '',
-          'Saldo Baku (Base)': w.balance,
-          'Target Baku (Base)': w.goalAmount ?? 0,
         };
   });
   const walletSheet = XLSX.utils.json_to_sheet(walletRows);
@@ -295,15 +281,12 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
       ? {
           'Category Name': catNameLocalized,
           'Category Type': catTypeLabel,
-          'Spent / Received This Month': formatCurrencyDisplay(spentThisMonth, data.currencyCode),
-          'Raw Spent This Month': spentThisMonth,
-          'Monthly Budget Limit': dispLimit > 0 ? formatCurrencyDisplay(dispLimit, data.currencyCode) : '-',
-          'Raw Limit Amount': dispLimit,
+          'Spent / Received This Month': spentThisMonth,
+          'Monthly Budget Limit': dispLimit > 0 ? dispLimit : '-',
           'Icon Name': c.icon,
           'Color Code': c.color,
           'System Default': c.system ? 'Yes' : 'No',
           'Category Code': c.id,
-          'Base Exact Limit': c.monthlyLimit ?? 0,
           'Original Name': c.name,
           'Translation ID': c.translations?.id ?? '',
           'Translation EN': c.translations?.en ?? '',
@@ -311,15 +294,12 @@ export function exportToExcelBuffer(data: BackupData, rates: Record<string, numb
       : {
           'Nama Kategori': catNameLocalized,
           'Jenis Kategori': catTypeLabel,
-          'Pengeluaran / Pemasukan Bulan Ini': formatCurrencyDisplay(spentThisMonth, data.currencyCode),
-          'Angka Bulan Ini': spentThisMonth,
-          'Batas Anggaran Bulanan': dispLimit > 0 ? formatCurrencyDisplay(dispLimit, data.currencyCode) : '-',
-          'Angka Batas Anggaran': dispLimit,
+          'Pengeluaran / Pemasukan Bulan Ini': spentThisMonth,
+          'Batas Anggaran Bulanan': dispLimit > 0 ? dispLimit : '-',
           'Nama Ikon': c.icon,
           'Kode Warna': c.color,
           'Kategori Bawaan Sistem': c.system ? 'Ya' : 'Tidak',
           'Kode Kategori': c.id,
-          'Batas Baku (Base)': c.monthlyLimit ?? 0,
           'Nama Asli': c.name,
           'Terjemahan ID': c.translations?.id ?? '',
           'Terjemahan EN': c.translations?.en ?? '',
@@ -555,15 +535,14 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
       const wId = String(r['Kode Dompet'] || r['Wallet Code'] || r.ID || r.id || `w-${idx}`);
       const wName = String(r['Nama Dompet / Tabungan'] || r['Wallet / Savings Name'] || r.Nama || r.name || 'Dompet');
 
-      // Check if exact base value is recorded in sheet
+      // Check if exact value is recorded in sheet
       let wBalance: number;
       if (r['Base Exact Balance'] !== undefined || r['Saldo Baku (Base)'] !== undefined) {
         wBalance = parseFlexibleNumber(r['Base Exact Balance'] ?? r['Saldo Baku (Base)']);
       } else {
-        const rawDispBal = parseFlexibleNumber(
+        wBalance = parseFlexibleNumber(
           r['Angka Saldo'] ?? r['Balance'] ?? r['Saldo Saat Ini'] ?? r['Formatted Balance'] ?? r.Saldo ?? r.FormatSaldo ?? r.balance ?? 0
         );
-        wBalance = normalizeToBase(rawDispBal);
       }
 
       let wGoal: number | undefined;
@@ -574,7 +553,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
         const rawGoal = r['Angka Target'] || r['Goal Amount'] || r['Target Tabungan'] || r['Formatted Goal'] || r.GoalAmount || r.FormatTarget;
         if (rawGoal !== undefined && rawGoal !== null && rawGoal !== '-' && rawGoal !== '') {
           const parsedDispGoal = parseFlexibleNumber(rawGoal);
-          wGoal = parsedDispGoal > 0 ? normalizeToBase(parsedDispGoal) : undefined;
+          wGoal = parsedDispGoal > 0 ? parsedDispGoal : undefined;
         }
       }
 
@@ -612,7 +591,7 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
               const rawLim = r['Angka Batas Anggaran'] || r['Raw Limit Amount'] || r['Batas Anggaran Bulanan'] || r['Monthly Budget Limit'] || r.MonthlyLimit || r.FormatLimit;
               if (rawLim !== undefined && rawLim !== null && rawLim !== '-' && rawLim !== '') {
                 const parsedDispLim = parseFlexibleNumber(rawLim);
-                monthlyLimit = parsedDispLim > 0 ? normalizeToBase(parsedDispLim) : undefined;
+                monthlyLimit = parsedDispLim > 0 ? parsedDispLim : undefined;
               }
             }
 
@@ -691,10 +670,9 @@ export function importFromExcelBuffer(buffer: ArrayBuffer): BackupData | null {
         if (r['Base Exact Amount'] !== undefined || r['Nominal Baku (Base)'] !== undefined) {
           amountVal = parseFlexibleNumber(r['Base Exact Amount'] ?? r['Nominal Baku (Base)']);
         } else {
-          const rawDispAmount = parseFlexibleNumber(
+          amountVal = parseFlexibleNumber(
             r['Angka Nominal'] ?? r.Amount ?? r.Jumlah ?? r['Nominal Transaksi'] ?? r['Formatted Amount'] ?? r.FormatNominal ?? r.amount ?? 0
           );
-          amountVal = normalizeToBase(rawDispAmount);
         }
 
         return {
