@@ -44,7 +44,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setType(editing.type);
       setDescription(editing.description);
-      setAmount(String(Number(toDisplay(editing.amount).toFixed(2))));
+      setAmount(String(toDisplay(editing.amount)));
       setCategoryId(editing.categoryId);
       setWalletId(editing.walletId);
       setDate(editing.date);
@@ -75,7 +75,7 @@ export default function AddTransactionModal({ open, onClose, editing }: Props) {
     }
 
     if (!parsedAmount || parsedAmount <= 0) {
-      showToast('Isi nominal transaksi yang valid!', 'warn');
+      showToast('Isi jumlah transaksi yang valid!', 'warn');
       return;
     }
 

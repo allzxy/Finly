@@ -45,8 +45,8 @@ export default function WalletFormModal({ open, onClose, editing, mode = 'all' }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(editing.name);
       setType(editing.type);
-      setBalance(String(Number(toDisplay(editing.balance).toFixed(2))));
-      setGoal(editing.goalAmount ? String(Number(toDisplay(editing.goalAmount).toFixed(2))) : '');
+      setBalance(String(toDisplay(editing.balance)));
+      setGoal(editing.goalAmount ? String(toDisplay(editing.goalAmount)) : '');
       setInstitution(editing.institution ?? '');
     } else {
       setName('');

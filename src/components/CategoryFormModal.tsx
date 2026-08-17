@@ -42,7 +42,7 @@ export default function CategoryFormModal({ open, onClose, editing, defaultType 
       setType(editing.type);
       setIcon(editing.icon);
       setColor(editing.color);
-      setLimit(editing.monthlyLimit ? String(Number(toDisplay(editing.monthlyLimit).toFixed(2))) : '');
+      setLimit(editing.monthlyLimit ? String(toDisplay(editing.monthlyLimit)) : '');
     } else {
       setName('');
       setNameEn('');
